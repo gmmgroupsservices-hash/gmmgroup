@@ -56,6 +56,9 @@ export default function DashboardPreview({
   const [sqft, setSqft] = useState("");
   const [type, setType] = useState<"Villa" | "Apartment" | "Commercial" | "Plot">("Villa");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>(Array.from({ length: 7 }, () => ""));
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoUrls, setVideoUrls] = useState<string[]>(Array.from({ length: 1 }, () => ""));
   const [rera, setRera] = useState(true);
   const [featured, setFeatured] = useState(false);
   const [description, setDescription] = useState("");
@@ -74,6 +77,9 @@ export default function DashboardPreview({
     setSqft("");
     setType("Villa");
     setImageUrl("");
+    setImageUrls(Array.from({ length: 7 }, () => ""));
+    setVideoUrl("");
+    setVideoUrls(Array.from({ length: 1 }, () => ""));
     setRera(true);
     setFeatured(false);
     setDescription("");
@@ -95,6 +101,12 @@ export default function DashboardPreview({
     setSqft(p.sqft.toString());
     setType(p.type);
     setImageUrl(p.imageUrl);
+    const incomingImages = [p.imageUrl, ...(p.imageUrls || [])].filter(Boolean).slice(0, 8);
+    const incomingVideos = [p.videoUrl, ...(p.videoUrls || [])].filter(Boolean).slice(0, 2);
+    setImageUrl(incomingImages[0] || "");
+    setImageUrls(Array.from({ length: 7 }, (_, idx) => incomingImages[idx + 1] || ""));
+    setVideoUrl(incomingVideos[0] || "");
+    setVideoUrls(Array.from({ length: 1 }, (_, idx) => incomingVideos[idx + 1] || ""));
     setRera(p.rera);
     setFeatured(p.featured);
     setDescription(p.description);
@@ -106,6 +118,9 @@ export default function DashboardPreview({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const normalizedImages = [imageUrl, ...imageUrls].map((item) => item.trim()).filter(Boolean).slice(0, 8);
+    const normalizedVideos = [videoUrl, ...videoUrls].map((item) => item.trim()).filter(Boolean).slice(0, 2);
 
     const formattedProp: Property = {
       id: editingId || `prop-${Date.now()}`,
@@ -119,7 +134,10 @@ export default function DashboardPreview({
       baths: Number(baths) || 0,
       sqft: Number(sqft) || 2000,
       type,
-      imageUrl: imageUrl || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200",
+      imageUrl: normalizedImages[0] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200",
+      imageUrls: normalizedImages.slice(1),
+      videoUrl: normalizedVideos[0],
+      videoUrls: normalizedVideos.slice(1),
       rera,
       featured,
       description: description || " CONFIDENTIAL luxury GMM estate.",
@@ -653,6 +671,64 @@ export default function DashboardPreview({
                       placeholder="Paste clean high-resolution Unsplash link"
                       className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white"
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-white/5 bg-slate-950/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-semibold text-teal-300 uppercase tracking-widest">Property Media Slider</h4>
+                      <p className="text-[10px] text-gray-500 mt-1">Add up to 8 images and 2 videos for each property slide deck.</p>
+                    </div>
+                    <span className="text-[10px] text-gray-400">10 slots total</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Images 1-8</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[imageUrl, ...imageUrls].map((value, index) => (
+                          <div key={`image-slot-${index}`} className="space-y-1">
+                            <span className="text-[9px] text-gray-500 uppercase">Image {index + 1}</span>
+                            <input
+                              type="text"
+                              value={value}
+                              onChange={(e) => {
+                                const next = [imageUrl, ...imageUrls];
+                                next[index] = e.target.value;
+                                setImageUrl(next[0] || "");
+                                setImageUrls(next.slice(1, 8));
+                              }}
+                              placeholder={`Paste image ${index + 1} URL`}
+                              className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Videos 1-2</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[videoUrl, ...videoUrls].map((value, index) => (
+                          <div key={`video-slot-${index}`} className="space-y-1">
+                            <span className="text-[9px] text-gray-500 uppercase">Video {index + 1}</span>
+                            <input
+                              type="text"
+                              value={value}
+                              onChange={(e) => {
+                                const next = [videoUrl, ...videoUrls];
+                                next[index] = e.target.value;
+                                setVideoUrl(next[0] || "");
+                                setVideoUrls(next.slice(1, 2));
+                              }}
+                              placeholder={`Paste video ${index + 1} URL`}
+                              className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

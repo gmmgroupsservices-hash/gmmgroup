@@ -7,6 +7,7 @@ import PropertyCard from "./components/PropertyCard";
 import QuickViewModal from "./components/QuickViewModal";
 import AIConcierge from "./components/AIConcierge";
 import ServicesAndFeatures from "./components/ServicesAndFeatures";
+import BusinessAddOns from "./components/BusinessAddOns";
 import VideoReels from "./components/VideoReels";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
@@ -28,6 +29,7 @@ export default function App() {
   const [searchText, setSearchText] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedBudget, setSelectedBudget] = useState<number>(0);
   const [selectedBeds, setSelectedBeds] = useState<number>(0);
@@ -201,6 +203,7 @@ export default function App() {
     setSearchText("");
     setSelectedState("");
     setSelectedCity("");
+    setSelectedLocation("");
     setSelectedType("");
     setSelectedBudget(0);
     setSelectedBeds(0);
@@ -234,6 +237,7 @@ export default function App() {
     // Dropdown configurations
     if (selectedState && prop.state !== selectedState) return false;
     if (selectedCity && prop.city !== selectedCity) return false;
+    if (selectedLocation && prop.location !== selectedLocation) return false;
     if (selectedType && prop.type !== selectedType) return false;
     if (selectedBudget && prop.numericPrice > selectedBudget) return false;
     
@@ -252,6 +256,13 @@ export default function App() {
   // Split calculations into Featured (latest on home first) and common listings block
   const featuredProperties = filteredProperties.filter((p) => p.featured);
   const commonProperties = filteredProperties.filter((p) => !p.featured);
+  const locationOptions = Array.from<string>(
+    new Set(
+      properties
+        .filter((prop) => (!selectedState || prop.state === selectedState) && (!selectedCity || prop.city === selectedCity))
+        .map((prop) => prop.location)
+    )
+  ).sort();
 
   return (
     <div className="bg-gray-950 font-sans text-gray-200 min-h-screen relative selection:bg-teal-500 selection:text-slate-950">
@@ -284,6 +295,9 @@ export default function App() {
         setSelectedState={setSelectedState}
         selectedCity={selectedCity}
         setSelectedCity={setSelectedCity}
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+        locationOptions={locationOptions}
         selectedType={selectedType}
         setSelectedType={setSelectedType}
         selectedBudget={selectedBudget}
@@ -294,7 +308,7 @@ export default function App() {
       />
 
       {/* CORE PROPERTY LISTINGS SYSTEM - DIRECTORY VIEW */}
-      <main id="listings" className="py-24 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main id="listings" className="py-24 relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Title */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/5 pb-8 mb-12">
@@ -341,7 +355,7 @@ export default function App() {
                     GMM Elite Showpieces
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                   {featuredProperties.map((prop) => (
                     <PropertyCard
                       key={prop.id}
@@ -366,7 +380,7 @@ export default function App() {
                     Active Catalog Portfolio
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                   {commonProperties.map((prop) => (
                     <PropertyCard
                       key={prop.id}
@@ -387,6 +401,9 @@ export default function App() {
 
       {/* Services and features grid section */}
       <ServicesAndFeatures />
+
+      {/* Business add-ons pages section */}
+      <BusinessAddOns />
 
       {/* Video Reels Walkthroughs */}
       <VideoReels />

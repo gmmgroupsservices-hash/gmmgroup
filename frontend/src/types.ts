@@ -11,7 +11,9 @@ export interface Property {
   sqft: number;
   type: "Villa" | "Apartment" | "Commercial" | "Plot";
   imageUrl: string;
+  imageUrls?: string[];
   videoUrl?: string; // high-quality visual snippet url
+  videoUrls?: string[];
   rera: boolean;
   featured: boolean;
   description: string;

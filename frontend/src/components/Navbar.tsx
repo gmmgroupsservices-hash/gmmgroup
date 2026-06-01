@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Menu, X, Landmark, Heart, Layers, MessageSquare, ShieldCheck, User } from "lucide-react";
+import { Menu, X, Heart, Layers, MessageSquare, ShieldCheck, User } from "lucide-react";
+import gmmLogo from "../assets/gmm logo-01.png";
 
 interface NavbarProps {
   favoritesCount: number;
@@ -25,7 +26,7 @@ export default function Navbar({
       setScrolled(window.scrollY > 40);
 
       // Simple active section highlights
-      const sections = ["home", "services", "listings", "reels", "ai-advisor", "about", "admin", "contact"];
+      const sections = ["home", "services", "business-addons", "listings", "reels", "ai-advisor", "about", "admin", "contact"];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -45,9 +46,11 @@ export default function Navbar({
   const menuItems = [
     { label: "Home", id: "home" },
     { label: "Services", id: "services" },
+    { label: "Add-ons", id: "business-addons" },
     { label: "Properties", id: "listings" },
-    { label: "Cinema Reels", id: "reels" },
+    { label: "Showcase", id: "reels" },
     { label: "AI Advisor", id: "ai-advisor" },
+    { label: "Admin Panel", id: "admin" },
     { label: "Sovereign Stat", id: "about" },
     { label: "Contact", id: "contact" }
   ];
@@ -72,16 +75,20 @@ export default function Navbar({
           {/* Logo Brand */}
           <div 
             onClick={() => handleNavClick("home")}
-            className="flex items-center space-x-2 cursor-pointer group"
+            className="flex items-center space-x-3 cursor-pointer group rounded-2xl bg-slate-950/25 backdrop-blur-md border border-white/10 px-3 py-2 shadow-md"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-teal-blue flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <Landmark className="w-5 h-5 text-white" />
+            <div className="w-14 h-14 rounded-xl bg-white overflow-hidden shadow-sm ring-1 ring-white/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+              <img
+                src={gmmLogo}
+                alt="GMM Groups & Services logo"
+                className="w-11 h-11 object-contain"
+              />
             </div>
-            <div>
-              <span className="font-display font-bold text-xl tracking-tight text-white block group-hover:text-teal-400 transition-colors duration-300">
+            <div className="drop-shadow-[0_1px_6px_rgba(0,0,0,0.75)] leading-none">
+              <span className="font-display font-bold text-2xl tracking-tight text-white block group-hover:text-teal-300 transition-colors duration-300">
                 GMM
               </span>
-              <span className="text-[9px] uppercase tracking-widest text-teal-300 block font-outfit">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-teal-300 block font-outfit mt-1">
                 Groups & Services
               </span>
             </div>
@@ -134,6 +141,16 @@ export default function Navbar({
                 </span>
               )}
             </button>
+
+            <a
+              href="http://localhost:3001"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide border border-white/10 text-gray-200 hover:text-white hover:border-teal-400/30 hover:bg-white/5 transition-all duration-300"
+              title="Open the standalone admin panel"
+            >
+              Admin Panel
+            </a>
 
             {/* Premium WhatsApp Slogan CTA */}
             <a

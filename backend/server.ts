@@ -2,11 +2,175 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
-import { INITIAL_PROPERTIES } from "./src/data";
-import { Property, Lead } from "./src/types";
+import { INITIAL_PROPERTIES as PUBLIC_INITIAL_PROPERTIES, SERVICES as PUBLIC_SERVICES, REELS as PUBLIC_REELS } from "../frontend/src/data";
+import { Property as PublicProperty, Lead } from "../frontend/src/types";
+import {
+  Property as AdminProperty,
+  ServiceItem as AdminServiceItem,
+  AddOnItem as AdminAddOnItem,
+  ShowcaseReel as AdminShowcaseReel,
+  ContactDetails as AdminContactDetails,
+  HeroContent as AdminHeroContent,
+  AIAdvisorConfig as AdminAIAdvisorConfig,
+  NavbarLabel as AdminNavbarLabel,
+  RecentActivity as AdminRecentActivity
+} from "../admin-panel/src/types";
 
 // Seed server-side state in memory so CRUD persists during dev-session
-let properties: Property[] = [...INITIAL_PROPERTIES];
+const toAdminProperty = (property: PublicProperty): AdminProperty => {
+  const inferredType: AdminProperty["type"] = property.category === "Rent" ? "Rent" : "Sale";
+  const inferredCategory: AdminProperty["category"] =
+    property.type === "Commercial"
+      ? "Commercial"
+      : property.type === "Plot"
+        ? "Plot"
+        : property.type === "Villa"
+          ? "Villa"
+          : property.type === "Apartment"
+            ? "Apartment"
+            : "Residential";
+
+  return {
+    id: property.id,
+    title: property.title,
+    type: inferredType,
+    category: inferredCategory,
+    state: property.state,
+    city: property.city,
+    location: property.location,
+    price: property.numericPrice,
+    beds: property.beds,
+    baths: property.baths,
+    squareFeet: property.sqft,
+    description: property.description,
+    featured: property.featured,
+    reraFlag: property.rera,
+    status: "Published",
+    images: property.imageUrl
+      ? [
+          {
+            id: `img-${property.id}-cover`,
+            url: property.imageUrl,
+            isCoverOrPrimary: true,
+            type: "image",
+            title: `${property.title} Cover`
+          }
+        ]
+      : [],
+    videos: property.videoUrl
+      ? [
+          {
+            id: `vid-${property.id}-walkthrough`,
+            url: property.videoUrl,
+            isCoverOrPrimary: true,
+            type: "video",
+            title: `${property.title} Walkthrough`
+          }
+        ]
+      : [],
+    createdAt: new Date().toISOString()
+  };
+};
+
+const ADMIN_SERVICES: AdminServiceItem[] = PUBLIC_SERVICES.map((service, index) => ({
+  id: `srv-${index + 1}`,
+  title: service.title,
+  description: service.description,
+  icon: service.icon,
+  priceRange: "",
+  status: "Published"
+}));
+
+const ADMIN_ADDONS: AdminAddOnItem[] = [
+  {
+    id: "add-1",
+    title: "Home Loans",
+    description: "Loan assistance and bank coordination for property purchases and construction finance.",
+    price: "",
+    status: "Published"
+  },
+  {
+    id: "add-2",
+    title: "Interior Design",
+    description: "Space planning, materials, and end-to-end interior fit-out coordination.",
+    price: "",
+    status: "Published"
+  },
+  {
+    id: "add-3",
+    title: "Paint Works",
+    description: "Premium interior and exterior paint packages for residential and commercial projects.",
+    price: "",
+    status: "Published"
+  },
+  {
+    id: "add-4",
+    title: "Fencing Works",
+    description: "Boundary fencing, gates, and site perimeter protection for plots and developments.",
+    price: "",
+    status: "Published"
+  }
+];
+
+const ADMIN_REELS: AdminShowcaseReel[] = PUBLIC_REELS.map((reel, index) => ({
+  id: `reel-${index + 1}`,
+  title: reel.title,
+  videoUrl: reel.videoUrl,
+  thumbnailUrl: "",
+  views: reel.duration,
+  status: "Published"
+}));
+
+const ADMIN_CONTACT_DETAILS: AdminContactDetails = {
+  phone: "+91 80 4492 1000",
+  whatsappNumber: "+91 98765 43210",
+  whatsappButtonText: "GMM Services WhatsApp",
+  email: "info@gmmgroups.in",
+  address: "GMM Groups & Services, Lower Parel, Mumbai, Maharashtra, India",
+  gmapsEmbedUrl: "",
+  seoTitle: "GMM Groups & Services | Properties, Loans, Interiors & Add-ons",
+  seoDescription: "GMM Groups & Services helps with premium properties, loans, interiors, paint works, fencing works, and business add-ons across India.",
+  footerText: "© 2026 GMM Groups & Services. All rights reserved."
+};
+
+const ADMIN_HERO: AdminHeroContent = {
+  title: "Find Your Dream Property",
+  subtitle:
+    "The ultimate single-destination premium portal for certified lands, architectural villas, and institutional offices across Karnataka, Telangana, and Andhra Pradesh.",
+  backgroundImage: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=2000",
+  primaryButtonText: "Explore Properties",
+  secondaryButtonText: "Contact Agent"
+};
+
+const ADMIN_AI_CONFIG: AdminAIAdvisorConfig = {
+  bannerTitle: "GMM Smart AI Property Advisor",
+  bannerSubtitle: "Ask anything about properties, documentation, loans, interiors, or add-ons.",
+  systemPrompt:
+    'You are the GMM Groups & Services property advisor. Help with properties, loans, interiors, paint works, fencing works, documentation, and WhatsApp contact. Keep responses concise, helpful, and professional.',
+  welcomeMessage:
+    "Welcome to GMM Groups & Services. I can help with properties, documentation, loans, interiors, and other business add-ons. How can I help you today?",
+  suggestedQuestions: [
+    "Tell me about the Hyderabad villas",
+    "What add-ons can I manage?",
+    "Can you help with home loans?",
+    "How do I upload property videos?"
+  ]
+};
+
+const ADMIN_NAVBAR_LABELS: AdminNavbarLabel[] = [
+  { id: "nav-1", label: "Home", path: "/" },
+  { id: "nav-2", label: "Services", path: "/services" },
+  { id: "nav-3", label: "Add-ons", path: "/business-addons" },
+  { id: "nav-4", label: "Properties", path: "/listings" },
+  { id: "nav-5", label: "Showcase", path: "/reels" },
+  { id: "nav-6", label: "AI Advisor", path: "/ai-advisor" },
+  { id: "nav-7", label: "Sovereign Stat", path: "/about" },
+  { id: "nav-8", label: "Contact", path: "/contact" }
+];
+
+const ADMIN_ACTIVITIES: AdminRecentActivity[] = [];
+
+let properties: PublicProperty[] = [...PUBLIC_INITIAL_PROPERTIES];
 let leads: Lead[] = [
   {
     id: "lead-1",
@@ -30,10 +194,34 @@ let leads: Lead[] = [
   }
 ];
 
-const app = express();
-app.use(express.json());
+type AdminSiteContent = {
+  properties: AdminProperty[];
+  services: AdminServiceItem[];
+  addons: AdminAddOnItem[];
+  reels: AdminShowcaseReel[];
+  contactDetails: AdminContactDetails;
+  heroContent: AdminHeroContent;
+  aiAdvisorConfig: AdminAIAdvisorConfig;
+  navbarLabels: AdminNavbarLabel[];
+  activities: AdminRecentActivity[];
+};
 
-const PORT = 3000;
+let siteContent: AdminSiteContent = {
+  properties: PUBLIC_INITIAL_PROPERTIES.map(toAdminProperty),
+  services: [...ADMIN_SERVICES],
+  addons: [...ADMIN_ADDONS],
+  reels: [...ADMIN_REELS],
+  contactDetails: { ...ADMIN_CONTACT_DETAILS },
+  heroContent: { ...ADMIN_HERO },
+  aiAdvisorConfig: { ...ADMIN_AI_CONFIG },
+  navbarLabels: [...ADMIN_NAVBAR_LABELS],
+  activities: [...ADMIN_ACTIVITIES]
+};
+
+const app = express();
+app.use(express.json({ limit: "100mb" }));
+
+const PORT = Number(process.env.PORT) || 3000;
 
 // Lazy initialize Gemini API client to prevent startup failure if key is missing
 let aiClient: GoogleGenAI | null = null;
@@ -62,7 +250,7 @@ app.get("/api/properties", (req, res) => {
 });
 
 app.post("/api/properties", (req, res) => {
-  const newPropObject = req.body as Property;
+  const newPropObject = req.body as PublicProperty;
   if (!newPropObject.id) {
     newPropObject.id = `prop-${Date.now()}`;
   }
@@ -90,6 +278,31 @@ app.delete("/api/properties/:id", (req, res) => {
   } else {
     res.status(404).json({ error: "Property not found" });
   }
+});
+
+app.get("/api/admin/site-content", (req, res) => {
+  res.json(siteContent);
+});
+
+app.put("/api/admin/site-content", (req, res) => {
+  siteContent = {
+    ...siteContent,
+    ...req.body,
+    properties: Array.isArray(req.body.properties) ? req.body.properties : siteContent.properties,
+    services: Array.isArray(req.body.services) ? req.body.services : siteContent.services,
+    addons: Array.isArray(req.body.addons) ? req.body.addons : siteContent.addons,
+    reels: Array.isArray(req.body.reels) ? req.body.reels : siteContent.reels,
+    navbarLabels: Array.isArray(req.body.navbarLabels) ? req.body.navbarLabels : siteContent.navbarLabels,
+    activities: Array.isArray(req.body.activities) ? req.body.activities : siteContent.activities,
+    contactDetails: req.body.contactDetails ?? siteContent.contactDetails,
+    heroContent: req.body.heroContent ?? siteContent.heroContent,
+    aiAdvisorConfig: req.body.aiAdvisorConfig ?? siteContent.aiAdvisorConfig
+  };
+  res.json(siteContent);
+});
+
+app.get("/api/site-content", (req, res) => {
+  res.json(siteContent);
 });
 
 // REST API - Leads
@@ -131,7 +344,7 @@ app.post("/api/chat", async (req, res) => {
     // Elegant simulation fallback for zero API key configured
     // This allows testing the AI Advisor gracefully in any mock/preview deployment!
     setTimeout(() => {
-      let matchedProps: Property[] = [];
+      let matchedProps: PublicProperty[] = [];
       const textLower = latestMessage.toLowerCase();
       
       // Look for custom matches in active inventory
@@ -202,7 +415,7 @@ Rules:
     const botAnswerText = queryResponse.text || "I apologize, custom network constraints prevented a response. How can I guide you regarding our Jubilee Hills or Whitefield assets?";
 
     // Post-process the response to find which properties from our list we should recommend as structured floating visual cards
-    let suggestedProperties: Property[] = [];
+    let suggestedProperties: PublicProperty[] = [];
     const answerLower = botAnswerText.toLowerCase();
     properties.forEach(p => {
       // Check if property title, location or id is mentioned in the bot response
@@ -245,13 +458,15 @@ async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     // Vite middleware for lightning-fast development serving
     const vite = await createViteServer({
+      root: path.resolve(process.cwd(), "frontend"),
+      configFile: path.resolve(process.cwd(), "frontend", "vite.config.ts"),
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
     // Serve static compiled assets in production
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(process.cwd(), "frontend", "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));

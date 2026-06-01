@@ -1,0 +1,6 @@
+{
+  "name": "GMM Groups Admin Panel",
+  "description": "A comprehensive, premium dark-themed admin dashboard for GMM Groups & Services, with full-featured property, content, and media management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

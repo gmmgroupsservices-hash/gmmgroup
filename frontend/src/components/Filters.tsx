@@ -10,6 +10,9 @@ interface FiltersProps {
   setSelectedState: (state: string) => void;
   selectedCity: string;
   setSelectedCity: (city: string) => void;
+  selectedLocation: string;
+  setSelectedLocation: (location: string) => void;
+  locationOptions: string[];
   selectedType: string;
   setSelectedType: (type: string) => void;
   selectedBudget: number;
@@ -28,6 +31,9 @@ export default function Filters({
   setSelectedState,
   selectedCity,
   setSelectedCity,
+  selectedLocation,
+  setSelectedLocation,
+  locationOptions,
   selectedType,
   setSelectedType,
   selectedBudget,
@@ -64,6 +70,7 @@ export default function Filters({
   const handleStateChange = (state: string) => {
     setSelectedState(state);
     setSelectedCity(""); // Reset city when state shifts
+    setSelectedLocation("");
   };
 
   // Pre-approval quick EMI calculator logic
@@ -151,7 +158,7 @@ export default function Filters({
             </div>
 
             {/* Row 2: Select Dropdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               
               {/* Filter 1: State Picker */}
               <div className="space-y-1.5">
@@ -179,7 +186,10 @@ export default function Filters({
                 </label>
                 <select
                   value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCity(e.target.value);
+                    setSelectedLocation("");
+                  }}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
                 >
                   <option value="">All Micro-Markets</option>
@@ -189,7 +199,25 @@ export default function Filters({
                 </select>
               </div>
 
-              {/* Filter 3: Property Type Selector */}
+              {/* Filter 3: Exact Location Selector */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
+                  <MapPin className="w-3 h-3 text-cyan-400" />
+                  <span>Exact Location</span>
+                </label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
+                >
+                  <option value="">All Locations</option>
+                  {locationOptions.map((location) => (
+                    <option key={location} value={location}>{location}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter 4: Property Type Selector */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <Home className="w-3 h-3 text-teal-400" />
@@ -208,7 +236,7 @@ export default function Filters({
                 </select>
               </div>
 
-              {/* Filter 4: Capital Range Ceiling */}
+              {/* Filter 5: Capital Range Ceiling */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <DollarSign className="w-3 h-3 text-emerald-400" />
@@ -229,7 +257,7 @@ export default function Filters({
                 </select>
               </div>
 
-              {/* Filter 5: BHK Beds count */}
+              {/* Filter 6: BHK Beds count */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <Users className="w-3 h-3 text-teal-400" />
