@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { Plus, Minus, HelpCircle } from "lucide-react";
 import { FAQS } from "../data";
+import { FAQItem } from "../types";
 
-export default function FAQ() {
+interface FAQProps {
+  faqs?: FAQItem[];
+}
+
+export default function FAQ({ faqs = FAQS }: FAQProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const toggleAccordion = (index: number) => {
@@ -32,7 +37,7 @@ export default function FAQ() {
 
         {/* Accordions */}
         <div className="space-y-4">
-          {FAQS.map((faq, idx) => {
+          {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
 
             return (

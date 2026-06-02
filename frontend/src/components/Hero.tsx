@@ -1,13 +1,20 @@
 import React, { useState } from "react";
 import { Play, ArrowRight, ShieldCheck, Award, MessageSquare } from "lucide-react";
+import { HeroContent } from "../types";
 
 interface HeroProps {
   onExploreClick: () => void;
   onContactClick: () => void;
+  heroContent?: HeroContent;
 }
 
-export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
+export default function Hero({ onExploreClick, onContactClick, heroContent }: HeroProps) {
   const [showTourVideo, setShowTourVideo] = useState(false);
+  const title = heroContent?.title ?? "Find Your Dream Property";
+  const subtitle = heroContent?.subtitle ?? "The ultimate single-destination premium portal for certified lands, architectural villas, and institutional offices across Karnataka, Telangana, and Andhra Pradesh.";
+  const primaryButtonText = heroContent?.primaryButtonText ?? "Explore Properties";
+  const secondaryButtonText = heroContent?.secondaryButtonText ?? "Contact Agent";
+  const backgroundImage = heroContent?.backgroundImage ?? "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=2000";
 
   return (
     <header id="home" className="relative min-h-[88vh] flex items-center justify-center overflow-hidden pt-24 bg-gray-950">
@@ -16,7 +23,7 @@ export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-950/20 via-gray-940/70 to-gray-950 z-10" />
         <img
-          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=2000"
+          src={backgroundImage}
           alt="GMM Sovereign Estate Background"
           className="w-full h-full object-cover scale-105 animate-pulse-subtle"
           style={{ animationDuration: "12s" }}
@@ -36,14 +43,14 @@ export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
         <div className="inline-flex items-center space-x-2 bg-white/5 backdrop-blur-md px-4 py-1.5 rounded-full border border-teal-500/20 text-xs font-semibold mb-6 animate-fade-in-down">
           <Award className="w-3.5 h-3.5 text-teal-400 animate-spin-slow" />
           <span className="text-teal-300 font-outfit uppercase tracking-widest text-[10px]">
-            Sovereign Estate Portfolio 2026
+            {heroContent?.title ? "Live Hero Banner" : "Sovereign Estate Portfolio 2026"}
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
         </div>
 
         {/* Big Displays Title */}
         <h1 className="font-display font-bold text-4xl sm:text-6xl lg:text-7xl tracking-tight leading-none mb-6">
-          <span className="block text-white">Find Your Dream Property</span>
+          <span className="block text-white">{title}</span>
           <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-teal-400 to-sky-400 font-extrabold mt-1">
             With GMM Groups & Services
           </span>
@@ -51,8 +58,7 @@ export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
 
         {/* Subtitle */}
         <p className="max-w-2xl mx-auto text-base sm:text-lg text-gray-400 leading-relaxed font-outfit font-light mb-10">
-          The ultimate single-destination premium portal for certified lands, 
-          architectural villas, and institutional offices across Karnataka, Telangana, and Andhra Pradesh.
+          {subtitle}
         </p>
 
         {/* Call to Actions */}
@@ -61,7 +67,7 @@ export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
             onClick={onExploreClick}
             className="w-full sm:w-auto glow-btn bg-gradient-teal-blue text-white font-medium px-8 py-3.5 rounded-xl text-sm tracking-wide shadow-xl shadow-teal-500/10 flex items-center justify-center space-x-2 border border-teal-400/20 hover:scale-103 active:scale-97 cursor-pointer transition-all duration-300"
           >
-            <span>Explore Properties</span>
+            <span>{primaryButtonText}</span>
             <ArrowRight className="w-4.5 h-4.5" />
           </button>
 
@@ -70,7 +76,7 @@ export default function Hero({ onExploreClick, onContactClick }: HeroProps) {
             className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm font-medium border border-white/10 hover:border-teal-500/30 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center space-x-2 hover:scale-103 active:scale-97 cursor-pointer transition-all duration-300"
           >
             <MessageSquare className="w-4 h-4 text-teal-400" />
-            <span>Contact Agent</span>
+            <span>{secondaryButtonText}</span>
           </button>
 
           {/* Watch Tour Play CTA */}

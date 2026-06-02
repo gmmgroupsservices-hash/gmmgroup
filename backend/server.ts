@@ -114,6 +114,64 @@ const toAdminProperty = (property: PublicProperty): AdminProperty => {
   };
 };
 
+const formatPublicPrice = (price: number, type: AdminProperty["type"]) => {
+  if (!Number.isFinite(price)) return "₹0";
+  const suffix = type === "Rent" || type === "Lease" ? "/mo" : "";
+  if (price >= 10000000) {
+    const value = price / 10000000;
+    const formatted = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2);
+    return `₹${formatted} Crore${suffix}`;
+  }
+  if (price >= 100000) {
+    const value = price / 100000;
+    const formatted = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2);
+    return `₹${formatted} Lakh${suffix}`;
+  }
+  return `₹${price.toLocaleString()}${suffix}`;
+};
+
+const toPublicProperty = (property: AdminProperty): PublicProperty => {
+  const existing = properties.find(item => item.id === property.id);
+  const imageUrls = Array.isArray(property.images) ? property.images.map(image => image.url).filter(Boolean) : [];
+  const videoUrls = Array.isArray(property.videos) ? property.videos.map(video => video.url).filter(Boolean) : [];
+  const adminTypeMap: Record<AdminProperty["category"], PublicProperty["type"]> = {
+    Residential: existing?.type ?? "Apartment",
+    Commercial: "Commercial",
+    Plot: "Plot",
+    Villa: "Villa",
+    Apartment: "Apartment",
+    Warehouse: existing?.type ?? "Commercial"
+  };
+  const category: PublicProperty["category"] =
+    property.type === "Rent" ? "Rent" : property.type === "Lease" ? "Rent" : "Buy";
+
+  return {
+    id: property.id,
+    title: property.title,
+    price: existing?.price ?? formatPublicPrice(property.price, property.type),
+    numericPrice: property.price,
+    location: property.location,
+    city: property.city,
+    state: property.state,
+    beds: property.beds,
+    baths: property.baths,
+    sqft: property.squareFeet,
+    type: adminTypeMap[property.category],
+    imageUrl: imageUrls[0] || existing?.imageUrl || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+    imageUrls,
+    videoUrl: videoUrls[0] || existing?.videoUrl,
+    videoUrls,
+    rera: property.reraFlag,
+    featured: property.featured,
+    description: property.description || existing?.description || "",
+    highlights: existing?.highlights ?? [],
+    amenities: existing?.amenities ?? [],
+    category,
+    valuation: existing?.valuation,
+    investmentYield: existing?.investmentYield
+  };
+};
+
 const ADMIN_SERVICES: AdminServiceItem[] = PUBLIC_SERVICES.map((service, index) => ({
   id: `srv-${index + 1}`,
   title: service.title,
@@ -430,6 +488,9 @@ app.put("/api/admin/site-content", (req, res) => {
     heroContent: req.body.heroContent ?? siteContent.heroContent,
     aiAdvisorConfig: req.body.aiAdvisorConfig ?? siteContent.aiAdvisorConfig
   };
+  if (Array.isArray(siteContent.properties)) {
+    properties = siteContent.properties.map(toPublicProperty);
+  }
   res.json(siteContent);
 });
 

@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { Play, Pause, Video, Eye, Award } from "lucide-react";
 import { REELS } from "../data";
+import { ShowcaseReel } from "../types";
 
-export default function VideoReels() {
+interface VideoReelsProps {
+  reels?: ShowcaseReel[];
+}
+
+export default function VideoReels({ reels = REELS }: VideoReelsProps) {
   const [playingReelId, setPlayingReelId] = useState<string | null>(null);
 
   const togglePlayReel = (id: string) => {
@@ -36,7 +41,7 @@ export default function VideoReels() {
 
         {/* Vertical reels listing layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center max-w-4xl mx-auto">
-          {REELS.map((reel) => {
+          {reels.map((reel) => {
             const isPlaying = playingReelId === reel.id;
 
             return (
@@ -60,9 +65,12 @@ export default function VideoReels() {
                     {/* Generates high-res corresponding image block */}
                     <img
                       src={
-                        reel.id === "reel-1" ? "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=400" :
-                        reel.id === "reel-2" ? "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=400" :
-                        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400"
+                        reel.thumbnailUrl ||
+                        (reel.id === "reel-1"
+                          ? "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=400"
+                          : reel.id === "reel-2"
+                            ? "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=400"
+                            : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400")
                       }
                       alt={reel.title}
                       className="w-full h-full object-cover transition-opacity duration-500 group-hover:scale-103"

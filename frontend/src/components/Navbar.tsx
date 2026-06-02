@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X, Heart, Layers, MessageSquare, ShieldCheck, User } from "lucide-react";
 import gmmLogo from "../assets/gmm logo-01.png";
+import { NavbarLabel } from "../types";
 
 interface NavbarProps {
   favoritesCount: number;
@@ -8,6 +9,7 @@ interface NavbarProps {
   onOpenFavorites: () => void;
   onOpenCompare: () => void;
   onScrollToSection: (sectionId: string) => void;
+  labels?: NavbarLabel[];
 }
 
 export default function Navbar({
@@ -15,7 +17,8 @@ export default function Navbar({
   compareCount,
   onOpenFavorites,
   onOpenCompare,
-  onScrollToSection
+  onScrollToSection,
+  labels
 }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,7 +46,7 @@ export default function Navbar({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const menuItems = [
+  const defaultMenuItems: NavbarLabel[] = [
     { label: "Home", id: "home" },
     { label: "Services", id: "services" },
     { label: "Add-ons", id: "business-addons" },
@@ -53,6 +56,13 @@ export default function Navbar({
     { label: "Sovereign Stat", id: "about" },
     { label: "Contact", id: "contact" }
   ];
+  const menuItems = defaultMenuItems.map((item) => {
+    const override = labels?.find((label) => label.path === item.id || label.id === item.id);
+    return {
+      ...item,
+      label: override?.label ?? item.label
+    };
+  });
 
   const handleNavClick = (id: string) => {
     onScrollToSection(id);

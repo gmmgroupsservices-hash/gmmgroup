@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Send, MapPin, Mail, Phone, ShieldCheck, Landmark, Github, Linkedin, MessageSquare, Compass } from "lucide-react";
-export default function ContactAndFooter() {
+import { ContactDetails } from "../types";
+
+interface ContactAndFooterProps {
+  contactDetails?: ContactDetails;
+}
+
+export default function ContactAndFooter({ contactDetails }: ContactAndFooterProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -52,6 +58,11 @@ export default function ContactAndFooter() {
       lon: "83.3768° E"
     }
   };
+
+  const phone = contactDetails?.phone ?? coordinates[activeCoordinate].phone;
+  const email = contactDetails?.email ?? "info@gmmgroups.in";
+  const address = contactDetails?.address ?? "GMM Groups & Services, Lower Parel, Mumbai, Maharashtra, India";
+  const footerText = contactDetails?.footerText ?? "© 2026 GMM Groups & Services Private Limited. India's Premier Sovereign Estate Marketplace. All Rights Reserved.";
 
   return (
     <footer id="contact" className="bg-gray-950 border-t border-white/5 relative z-10 pt-24 pb-8">
@@ -227,7 +238,7 @@ export default function ContactAndFooter() {
                 </p>
                 <p className="text-gray-400 flex items-center space-x-1 pl-5">
                   <Phone className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Representative Phone: {coordinates[activeCoordinate].phone}</span>
+                  <span>Representative Phone: {phone}</span>
                 </p>
               </div>
             </div>
@@ -281,7 +292,8 @@ export default function ContactAndFooter() {
             <p className="text-gray-400">
               Karnataka: Indiranagar Obsidian Suite, Bangalore.<br/>
               Telangana: Road No. 36 Private Gated, Hyderabad.<br/>
-              Email: info@gmmgroups.in
+              Email: {email}<br/>
+              Address: {address}
             </p>
             <div className="flex space-x-2 pt-1 text-gray-400">
               <span className="p-2 bg-slate-900 border border-white/5 rounded-lg hover:text-teal-400 cursor-pointer"><Github className="w-4 h-4" /></span>

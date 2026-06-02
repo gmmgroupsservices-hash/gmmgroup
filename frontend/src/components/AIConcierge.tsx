@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Sparkles, Send, Bot, User, ArrowRight, Eye, RefreshCw } from "lucide-react";
 import { ChatMessage, Property } from "../types";
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
 interface AIConciergeProps {
   onQuickViewProperty: (property: Property) => void;
 }
@@ -45,7 +47,7 @@ export default function AIConcierge({ onQuickViewProperty }: AIConciergeProps) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

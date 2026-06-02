@@ -1,8 +1,17 @@
 import React from "react";
 import * as Icons from "lucide-react";
-import { SERVICES, FEATURES_GRID } from "../data";
+import { FEATURES_GRID, SERVICES } from "../data";
+import { FeatureStatItem, ServiceItem } from "../types";
 
-export default function ServicesAndFeatures() {
+interface ServicesAndFeaturesProps {
+  services?: ServiceItem[];
+  featureStats?: FeatureStatItem[];
+}
+
+export default function ServicesAndFeatures({
+  services = SERVICES,
+  featureStats = FEATURES_GRID
+}: ServicesAndFeaturesProps) {
   return (
     <section id="services" className="py-24 relative overflow-hidden bg-gray-950">
       
@@ -27,7 +36,7 @@ export default function ServicesAndFeatures() {
 
         {/* Row 2: Services Grid list */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
-          {SERVICES.map((s, i) => {
+          {services.map((s, i) => {
             // Dynamically select matching Lucide React icons
             let IconComponent = Icons.ShieldAlert;
             if (s.icon === "Coins") IconComponent = Icons.Coins;
@@ -72,7 +81,7 @@ export default function ServicesAndFeatures() {
           </div>
 
           <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6 lg:pl-6 border-t lg:border-t-0 lg:border-l border-white/5 pt-6 lg:pt-0">
-            {FEATURES_GRID.map((f, i) => (
+            {featureStats.map((f, i) => (
               <div key={i} className="space-y-1.5 p-4 rounded-xl bg-slate-950/45 border border-white/5">
                 <span className="text-2xl sm:text-3xl font-display font-extrabold text-white block bg-clip-text text-transparent bg-gradient-to-r from-teal-200 to-teal-400">
                   {f.stat}

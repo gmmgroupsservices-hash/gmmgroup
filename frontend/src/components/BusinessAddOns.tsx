@@ -1,9 +1,17 @@
 import React, { useState } from "react";
 import { ArrowRight, Paintbrush, Hammer, HandCoins, BrickWall, ShieldCheck, CheckCircle2, PhoneCall } from "lucide-react";
+import { AddOnItem } from "../types";
 
 type AddOnId = "loans" | "interior" | "paints" | "fencing";
 
-const addOns = [
+type DefaultAddOn = AddOnItem & {
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  details: string[];
+  cta: string;
+};
+
+const defaultAddOns: DefaultAddOn[] = [
   {
     id: "loans" as AddOnId,
     title: "Home Loans",
@@ -62,10 +70,23 @@ const addOns = [
   }
 ] as const;
 
-export default function BusinessAddOns() {
+interface BusinessAddOnsProps {
+  addOns?: AddOnItem[];
+}
+
+export default function BusinessAddOns({ addOns }: BusinessAddOnsProps) {
   const [active, setActive] = useState<AddOnId>("loans");
 
-  const activeItem = addOns.find((item) => item.id === active) ?? addOns[0];
+  const sourceAddOns: DefaultAddOn[] = defaultAddOns.map((base) => {
+    const override = addOns?.find((item) => item.id === base.id);
+    return {
+      ...base,
+      title: override?.title ?? base.title,
+      description: override?.description ?? base.description,
+      cta: override?.cta ?? base.cta
+    };
+  });
+  const activeItem = sourceAddOns.find((item) => item.id === active) ?? sourceAddOns[0];
   const ActiveIcon = activeItem.icon;
 
   return (
@@ -88,7 +109,7 @@ export default function BusinessAddOns() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-4 space-y-3">
-            {addOns.map((item) => {
+            {sourceAddOns.map((item) => {
               const Icon = item.icon;
               const isActive = active === item.id;
 
@@ -165,7 +186,7 @@ export default function BusinessAddOns() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-              {addOns.map((item) => (
+              {sourceAddOns.map((item) => (
                 <div
                   key={item.id}
                   id={item.id}

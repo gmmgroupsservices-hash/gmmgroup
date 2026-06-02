@@ -12,13 +12,67 @@ import VideoReels from "./components/VideoReels";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
 import ContactAndFooter from "./components/ContactAndFooter";
-import { Property } from "./types";
-import { INITIAL_PROPERTIES } from "./data";
+import {
+  Property,
+  ServiceItem,
+  AddOnItem,
+  ShowcaseReel,
+  FeatureStatItem,
+  TestimonialItem,
+  FAQItem,
+  ContactDetails,
+  HeroContent,
+  NavbarLabel,
+  SiteContent
+} from "./types";
+import { FEATURES_GRID, FAQS, INITIAL_PROPERTIES, REELS, SERVICES, TESTIMONIALS } from "./data";
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+const DEFAULT_HERO_CONTENT: HeroContent = {
+  title: "Find Your Dream Property",
+  subtitle: "The ultimate single-destination premium portal for certified lands, architectural villas, and institutional offices across Karnataka, Telangana, and Andhra Pradesh.",
+  backgroundImage: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=2000",
+  primaryButtonText: "Explore Properties",
+  secondaryButtonText: "Contact Agent"
+};
+
+const DEFAULT_CONTACT_DETAILS: ContactDetails = {
+  phone: "+91 80 4492 1000",
+  whatsappNumber: "919999999999",
+  whatsappButtonText: "GMM Services WhatsApp",
+  email: "info@gmmgroups.in",
+  address: "GMM Groups & Services, Lower Parel, Mumbai, Maharashtra, India",
+  gmapsEmbedUrl: "",
+  seoTitle: "GMM Groups & Services | Properties, Loans, Interiors & Add-ons",
+  seoDescription: "GMM Groups & Services helps with premium properties, loans, interiors, paint works, fencing works, and business add-ons across India.",
+  footerText: "© 2026 GMM Groups & Services Private Limited. India's Premier Sovereign Estate Marketplace. All Rights Reserved."
+};
+
+const DEFAULT_NAVBAR_LABELS: NavbarLabel[] = [
+  { id: "nav-1", label: "Home", path: "home" },
+  { id: "nav-2", label: "Services", path: "services" },
+  { id: "nav-3", label: "Add-ons", path: "business-addons" },
+  { id: "nav-4", label: "Properties", path: "listings" },
+  { id: "nav-5", label: "Showcase", path: "reels" },
+  { id: "nav-6", label: "AI Advisor", path: "ai-advisor" },
+  { id: "nav-7", label: "Sovereign Stat", path: "about" },
+  { id: "nav-8", label: "Contact", path: "contact" }
+];
 
 export default function App() {
   
   // Core Portfolio & Leads lists sync'd from Express API endpoints
   const [properties, setProperties] = useState<Property[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>(SERVICES);
+  const [addons, setAddons] = useState<AddOnItem[]>([]);
+  const [reels, setReels] = useState<ShowcaseReel[]>(REELS);
+  const [featureStats, setFeatureStats] = useState<FeatureStatItem[]>(FEATURES_GRID);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(TESTIMONIALS);
+  const [faqs, setFaqs] = useState<FAQItem[]>(FAQS);
+  const [contactDetails, setContactDetails] = useState<ContactDetails>(DEFAULT_CONTACT_DETAILS);
+  const [heroContent, setHeroContent] = useState<HeroContent>(DEFAULT_HERO_CONTENT);
+  const [navbarLabels, setNavbarLabels] = useState<NavbarLabel[]>(DEFAULT_NAVBAR_LABELS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,17 +110,41 @@ export default function App() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const propsRes = await fetch("/api/properties");
+        const [siteRes, propsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/site-content`),
+          fetch(`${API_BASE}/api/properties`)
+        ]);
+
+        if (siteRes.ok) {
+          const siteData: SiteContent = await siteRes.json();
+          if (Array.isArray(siteData.services)) setServices(siteData.services);
+          if (Array.isArray(siteData.addons)) setAddons(siteData.addons);
+          if (Array.isArray(siteData.reels)) setReels(siteData.reels);
+          if (Array.isArray(siteData.featureStats)) setFeatureStats(siteData.featureStats);
+          if (Array.isArray(siteData.testimonials)) setTestimonials(siteData.testimonials);
+          if (Array.isArray(siteData.faqs)) setFaqs(siteData.faqs);
+          if (siteData.contactDetails) setContactDetails(siteData.contactDetails);
+          if (siteData.heroContent) setHeroContent(siteData.heroContent);
+          if (Array.isArray(siteData.navbarLabels)) setNavbarLabels(siteData.navbarLabels);
+        }
 
         if (!propsRes.ok) throw new Error("API sync interrupted");
 
         const propsData = await propsRes.json();
-
-        setProperties(propsData);
+        setProperties(Array.isArray(propsData) ? propsData : INITIAL_PROPERTIES);
       } catch (err) {
         console.warn("Backend endpoints unreachable. Falling back securely to static curated GMM catalog.", err);
         // Secure fallbacks to prevent screen breakage in environments without server-side routing instant starts!
         setProperties(INITIAL_PROPERTIES);
+        setServices(SERVICES);
+        setAddons([]);
+        setReels(REELS);
+        setFeatureStats(FEATURES_GRID);
+        setTestimonials(TESTIMONIALS);
+        setFaqs(FAQS);
+        setContactDetails(DEFAULT_CONTACT_DETAILS);
+        setHeroContent(DEFAULT_HERO_CONTENT);
+        setNavbarLabels(DEFAULT_NAVBAR_LABELS);
       } finally {
         setLoading(false);
       }
@@ -192,12 +270,14 @@ export default function App() {
         onOpenFavorites={() => setShowFavoritesDrawer(true)}
         onOpenCompare={() => setShowCompareDrawer(true)}
         onScrollToSection={handleScrollToSection}
+        labels={navbarLabels}
       />
 
       {/* Immersive Cinematic Hero Introduction */}
       <Hero
         onExploreClick={() => handleScrollToSection("listings")}
         onContactClick={() => handleScrollToSection("contact")}
+        heroContent={heroContent}
       />
 
       {/* Interactive Geoplot Search TABS Engine */}
@@ -315,26 +395,26 @@ export default function App() {
       </main>
 
       {/* Services and features grid section */}
-      <ServicesAndFeatures />
+      <ServicesAndFeatures services={services} featureStats={featureStats} />
 
       {/* Business add-ons pages section */}
-      <BusinessAddOns />
+      <BusinessAddOns addOns={addons} />
 
       {/* Video Reels Walkthroughs */}
-      <VideoReels />
+      <VideoReels reels={reels} />
 
       {/* GMM Smart AI Advisor - Gemini Grounding */}
       <AIConcierge onQuickViewProperty={(p) => setQuickViewProperty(p)} />
 
       {/* Sovereign High-contrast testimonials */}
-      <Testimonials />
+      <Testimonials testimonials={testimonials} />
 
       {/* GMM Admin Operational Portal Workspace (Interactive!) */}
       {/* accordion legal panel rules */}
-      <FAQ />
+      <FAQ faqs={faqs} />
 
       {/* Bottom map coordinators and contact escrows */}
-      <ContactAndFooter />
+      <ContactAndFooter contactDetails={contactDetails} />
 
       {/* DYNAMIC COMPONENT FLOATS & OVERLAY SIDEBAR DRAWER METRICS */}
       

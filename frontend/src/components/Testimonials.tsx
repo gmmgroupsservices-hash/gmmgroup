@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { ArrowLeft, ArrowRight, Quote } from "lucide-react";
 import { TESTIMONIALS } from "../data";
+import { TestimonialItem } from "../types";
 
-export default function Testimonials() {
+interface TestimonialsProps {
+  testimonials?: TestimonialItem[];
+}
+
+export default function Testimonials({ testimonials = TESTIMONIALS }: TestimonialsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const handleNext = () => {
@@ -13,7 +18,7 @@ export default function Testimonials() {
     setActiveIndex((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
   };
 
-  const activeTestimonial = TESTIMONIALS[activeIndex];
+  const activeTestimonial = testimonials[activeIndex];
 
   return (
     <section id="testimonials" className="py-24 relative overflow-hidden bg-slate-950/65">
@@ -88,7 +93,7 @@ export default function Testimonials() {
 
         {/* Pagination Dots Indicator */}
         <div className="flex justify-center items-center gap-1.5 mt-6">
-          {TESTIMONIALS.map((_, idx) => (
+          {testimonials.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setActiveIndex(idx)}
