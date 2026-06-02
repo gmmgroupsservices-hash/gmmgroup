@@ -84,22 +84,14 @@ export default function Navbar({
           {/* Logo Brand */}
           <div 
             onClick={() => handleNavClick("home")}
-            className="flex items-center space-x-3 cursor-pointer group rounded-2xl bg-slate-950/25 backdrop-blur-md border border-white/10 px-3 py-2 shadow-md"
+            className="flex items-center cursor-pointer group rounded-2xl bg-slate-950/25 backdrop-blur-md border border-white/10 p-2 shadow-md"
           >
-            <div className="w-14 h-14 rounded-xl bg-white overflow-hidden shadow-sm ring-1 ring-white/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-sm ring-1 ring-white/10 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 bg-white">
               <img
                 src={gmmLogo}
                 alt="GMM Groups & Services logo"
-                className="w-11 h-11 object-contain"
+                className="w-full h-full object-cover"
               />
-            </div>
-            <div className="drop-shadow-[0_1px_6px_rgba(0,0,0,0.75)] leading-none">
-              <span className="font-display font-bold text-2xl tracking-tight text-white block group-hover:text-teal-300 transition-colors duration-300">
-                GMM
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-teal-300 block font-outfit mt-1">
-                Groups & Services
-              </span>
             </div>
           </div>
 
