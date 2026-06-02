@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ./node_modules/tsx/dist/cli.mjs server.ts",
-    "build": "node ./node_modules/esbuild/bin/esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=../dist/backend/server.cjs",
+    "dev": "tsx server.ts",
+    "build": "node build.mjs",
+    "start": "node dist/server.cjs",
     "lint": "node ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
