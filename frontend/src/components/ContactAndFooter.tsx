@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Send, MapPin, Mail, Phone, ShieldCheck, Landmark, Github, Linkedin, MessageSquare, Compass } from "lucide-react";
+import { Send, MapPin, Mail, Phone, ShieldCheck, Github, Linkedin, MessageSquare, Compass } from "lucide-react";
+import gmmLogo from "../assets/gmm logo-01.png";
 import { ContactDetails } from "../types";
 
 interface ContactAndFooterProps {
@@ -255,8 +256,13 @@ export default function ContactAndFooter({ contactDetails }: ContactAndFooterPro
           
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Landmark className="w-6 h-6 text-teal-400" />
-              <span className="font-display font-bold text-lg text-white">GMM</span>
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-white/10 flex items-center justify-center">
+                <img
+                  src={gmmLogo}
+                  alt="GMM Groups & Services logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
             <p className="text-[11px] text-gray-500 font-light">
               Pristine verifications, architectural luxury, and direct corporate escrow compliance. Representing India's premier high-value real estate sectors.

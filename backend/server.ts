@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { v2 as cloudinary } from "cloudinary";
 import { config as loadEnv } from "dotenv";
@@ -11,10 +10,11 @@ import {
   FEATURES_GRID as PUBLIC_FEATURES_GRID,
   TESTIMONIALS as PUBLIC_TESTIMONIALS,
   FAQS as PUBLIC_FAQS
-} from "../frontend/src/data";
-import { Property as PublicProperty, Lead } from "../frontend/src/types";
-import {
-  Property as AdminProperty,
+} from "./data";
+import type {
+  PublicProperty,
+  Lead,
+  AdminProperty,
   ServiceItem as AdminServiceItem,
   AddOnItem as AdminAddOnItem,
   ShowcaseReel as AdminShowcaseReel,
@@ -25,8 +25,10 @@ import {
   HeroContent as AdminHeroContent,
   AIAdvisorConfig as AdminAIAdvisorConfig,
   NavbarLabel as AdminNavbarLabel,
-  RecentActivity as AdminRecentActivity
-} from "../admin/src/types";
+  RecentActivity as AdminRecentActivity,
+  SiteContent as AdminSiteContent,
+  AdminAccount
+} from "./types";
 
 const cwd = process.cwd();
 const runningFromBackendFolder = path.basename(cwd) === "backend";
@@ -35,13 +37,6 @@ const repoRoot = runningFromBackendFolder ? path.resolve(cwd, "..") : cwd;
 
 loadEnv({ path: path.resolve(backendDir, ".env") });
 loadEnv({ path: path.resolve(repoRoot, ".env") });
-
-type AdminAccount = {
-  id: string;
-  username: string;
-  password: string;
-  role: "administrator";
-};
 
 const ADMIN_SESSION_TOKEN = "gmm-admin-session";
 let adminAccounts: AdminAccount[] = [
@@ -330,21 +325,6 @@ let leads: Lead[] = [
     status: "Contacted"
   }
 ];
-
-type AdminSiteContent = {
-  properties: AdminProperty[];
-  services: AdminServiceItem[];
-  addons: AdminAddOnItem[];
-  reels: AdminShowcaseReel[];
-  featureStats: AdminFeatureStatItem[];
-  testimonials: AdminTestimonialItem[];
-  faqs: AdminFAQItem[];
-  contactDetails: AdminContactDetails;
-  heroContent: AdminHeroContent;
-  aiAdvisorConfig: AdminAIAdvisorConfig;
-  navbarLabels: AdminNavbarLabel[];
-  activities: AdminRecentActivity[];
-};
 
 const createDefaultAdminSiteContent = (): AdminSiteContent => ({
   properties: PUBLIC_INITIAL_PROPERTIES.map(toAdminProperty),
@@ -768,6 +748,7 @@ Rules:
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     // Vite middleware for lightning-fast development serving
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       root: path.resolve(repoRoot, "frontend"),
       configFile: path.resolve(repoRoot, "frontend", "vite.config.ts"),
