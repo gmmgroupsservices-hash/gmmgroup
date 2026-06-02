@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Sparkles, Send, Bot, User, ArrowRight, Eye, RefreshCw } from "lucide-react";
 import { ChatMessage, Property } from "../types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "") : "";
 
 interface AIConciergeProps {
   onQuickViewProperty: (property: Property) => void;

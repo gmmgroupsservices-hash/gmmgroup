@@ -65,7 +65,7 @@ const EMPTY_TESTIMONIALS: TestimonialItem[] = [];
 const EMPTY_FAQS: FAQItem[] = [];
 const EMPTY_NAVBAR_LABELS: NavbarLabel[] = [];
 const EMPTY_ACTIVITIES: RecentActivity[] = [];
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
 
 export default function App() {

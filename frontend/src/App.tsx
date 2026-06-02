@@ -27,7 +27,7 @@ import {
 } from "./types";
 import { FEATURES_GRID, FAQS, INITIAL_PROPERTIES, REELS, SERVICES, TESTIMONIALS } from "./data";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "") : "";
 
 const DEFAULT_HERO_CONTENT: HeroContent = {
   title: "Find Your Dream Property",

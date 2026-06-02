@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Save, Trash2, UserCog, KeyRound } from 'lucide-react';
 import { AdminAccount } from '../types';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
 const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
 

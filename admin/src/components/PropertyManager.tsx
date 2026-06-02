@@ -40,7 +40,7 @@ interface PropertyManagerProps {
 
 const MAX_IMAGES_PER_PROPERTY = 8;
 const MAX_VIDEOS_PER_PROPERTY = 2;
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
 const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
 
