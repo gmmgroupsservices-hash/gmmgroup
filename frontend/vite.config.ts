@@ -6,6 +6,7 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   const hmrDisabled = process.env.DISABLE_HMR === 'true';
   const hmrPort = Number(process.env.HMR_PORT) || 24679;
+  const backendPort = Number(process.env.BACKEND_PORT) || 3000;
 
   return {
     root: __dirname,
@@ -16,6 +17,12 @@ export default defineConfig(() => {
       },
     },
     server: {
+      proxy: {
+        '/api': {
+          target: `http://localhost:${backendPort}`,
+          changeOrigin: true,
+        },
+      },
       hmr: hmrDisabled ? false : { port: hmrPort },
       watch: hmrDisabled ? null : {},
     },

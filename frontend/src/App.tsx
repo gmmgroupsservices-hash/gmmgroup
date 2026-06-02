@@ -12,15 +12,13 @@ import VideoReels from "./components/VideoReels";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
 import ContactAndFooter from "./components/ContactAndFooter";
-import DashboardPreview from "./components/DashboardPreview";
-import { Property, Lead } from "./types";
+import { Property } from "./types";
 import { INITIAL_PROPERTIES } from "./data";
 
 export default function App() {
   
   // Core Portfolio & Leads lists sync'd from Express API endpoints
   const [properties, setProperties] = useState<Property[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,18 +56,13 @@ export default function App() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [propsRes, leadsRes] = await Promise.all([
-          fetch("/api/properties"),
-          fetch("/api/leads")
-        ]);
+        const propsRes = await fetch("/api/properties");
 
-        if (!propsRes.ok || !leadsRes.ok) throw new Error("API sync interrupted");
+        if (!propsRes.ok) throw new Error("API sync interrupted");
 
         const propsData = await propsRes.json();
-        const leadsData = await leadsRes.json();
 
         setProperties(propsData);
-        setLeads(leadsData);
       } catch (err) {
         console.warn("Backend endpoints unreachable. Falling back securely to static curated GMM catalog.", err);
         // Secure fallbacks to prevent screen breakage in environments without server-side routing instant starts!
@@ -94,85 +87,7 @@ export default function App() {
     localStorage.setItem("gmm_favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  // 2. Lead Management and dynamic callback posting
-  const handleAddNewLead = async (leadData: Omit<Lead, "id" | "timestamp" | "status">) => {
-    try {
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(leadData)
-      });
-      if (!res.ok) throw new Error("Failed to register dynamic lead inquiry");
-      const savedLeadObj = await res.json();
-      setLeads((prev) => [savedLeadObj, ...prev]);
-    } catch (err) {
-      console.warn("Server leads endpoint failed. Simulating local client push storage fallback.", err);
-      const simulatedLead: Lead = {
-        id: `sim-${Date.now()}`,
-        ...leadData,
-        timestamp: new Date().toLocaleString(),
-        status: "New"
-      };
-      setLeads((prev) => [simulatedLead, ...prev]);
-    }
-  };
-
-  const handleUpdateLeadStatus = (id: string, status: "New" | "Contacted" | "Closed") => {
-    // Optimistic fast refresh on front-end for improved UX
-    setLeads((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, status } : l))
-    );
-  };
-
-  // 3. Property Catalog CRUD actions
-  const handleAddProperty = async (newProp: Property) => {
-    try {
-      const res = await fetch("/api/properties", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProp)
-      });
-      if (!res.ok) throw new Error("Failed to add listing");
-      const createdObj = await res.json();
-      setProperties((prev) => [createdObj, ...prev]);
-    } catch (err) {
-      console.warn("CRUD API failed. Performing client-side fallback push.", err);
-      setProperties((prev) => [newProp, ...prev]);
-    }
-  };
-
-  const handleEditProperty = async (updatedProp: Property) => {
-    try {
-      const res = await fetch(`/api/properties/${updatedProp.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProp)
-      });
-      if (!res.ok) throw new Error("Failed to modify listing");
-      const updatedObj = await res.json();
-      setProperties((prev) =>
-        prev.map((p) => (p.id === updatedProp.id ? updatedObj : p))
-      );
-    } catch (err) {
-      console.warn("CRUD API failed. Performing client-side fallback replacement.", err);
-      setProperties((prev) =>
-        prev.map((p) => (p.id === updatedProp.id ? updatedProp : p))
-      );
-    }
-  };
-
-  const handleDeletProperty = async (id: string) => {
-    try {
-      const res = await fetch(`/api/properties/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to remove listing");
-      setProperties((prev) => prev.filter((p) => p.id !== id));
-    } catch (err) {
-      console.warn("CRUD API failed. Performing client-side fallback filtration.", err);
-      setProperties((prev) => prev.filter((p) => p.id !== id));
-    }
-  };
-
-  // 4. Selections & Comparison Drawer triggers
+  // Selections & Comparison Drawer triggers
   const handleToggleFavorite = (id: string) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
@@ -415,20 +330,11 @@ export default function App() {
       <Testimonials />
 
       {/* GMM Admin Operational Portal Workspace (Interactive!) */}
-      <DashboardPreview
-        properties={properties}
-        leads={leads}
-        onAddProperty={handleAddProperty}
-        onEditProperty={handleEditProperty}
-        onDeleteProperty={handleDeletProperty}
-        onUpdateLeadStatus={handleUpdateLeadStatus}
-      />
-
       {/* accordion legal panel rules */}
       <FAQ />
 
       {/* Bottom map coordinators and contact escrows */}
-      <ContactAndFooter onNewLead={handleAddNewLead} />
+      <ContactAndFooter />
 
       {/* DYNAMIC COMPONENT FLOATS & OVERLAY SIDEBAR DRAWER METRICS */}
       
@@ -589,7 +495,6 @@ export default function App() {
         <QuickViewModal
           property={quickViewProperty}
           onClose={() => setQuickViewProperty(null)}
-          onNewLead={handleAddNewLead}
         />
       )}
 

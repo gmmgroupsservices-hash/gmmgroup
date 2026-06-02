@@ -26,7 +26,7 @@ export default function Navbar({
       setScrolled(window.scrollY > 40);
 
       // Simple active section highlights
-      const sections = ["home", "services", "business-addons", "listings", "reels", "ai-advisor", "about", "admin", "contact"];
+      const sections = ["home", "services", "business-addons", "listings", "reels", "ai-advisor", "about", "contact"];
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -50,7 +50,6 @@ export default function Navbar({
     { label: "Properties", id: "listings" },
     { label: "Showcase", id: "reels" },
     { label: "AI Advisor", id: "ai-advisor" },
-    { label: "Admin Panel", id: "admin" },
     { label: "Sovereign Stat", id: "about" },
     { label: "Contact", id: "contact" }
   ];
@@ -141,16 +140,6 @@ export default function Navbar({
                 </span>
               )}
             </button>
-
-            <a
-              href="http://localhost:3001"
-              target="_blank"
-              rel="noreferrer"
-              className="px-4 py-2 rounded-xl text-xs font-semibold tracking-wide border border-white/10 text-gray-200 hover:text-white hover:border-teal-400/30 hover:bg-white/5 transition-all duration-300"
-              title="Open the standalone admin panel"
-            >
-              Admin Panel
-            </a>
 
             {/* Premium WhatsApp Slogan CTA */}
             <a

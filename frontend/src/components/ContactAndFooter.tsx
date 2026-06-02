@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { Send, MapPin, Mail, Phone, ShieldCheck, Landmark, Github, Linkedin, MessageSquare, Compass } from "lucide-react";
-import { Lead } from "../types";
-
-interface ContactAndFooterProps {
-  onNewLead: (lead: Omit<Lead, "id" | "timestamp" | "status">) => Promise<void>;
-}
-
-export default function ContactAndFooter({ onNewLead }: ContactAndFooterProps) {
+export default function ContactAndFooter() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,13 +19,6 @@ export default function ContactAndFooter({ onNewLead }: ContactAndFooterProps) {
 
     setIsSubmitting(true);
     try {
-      await onNewLead({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        message: formData.message || "Requested exclusive call callback",
-        propertyTitle: formData.propertyInterest
-      });
       setSubmitted(true);
       setFormData({ name: "", email: "", phone: "", propertyInterest: "General Luxury Portfolio", message: "" });
       setTimeout(() => setSubmitted(false), 8000);

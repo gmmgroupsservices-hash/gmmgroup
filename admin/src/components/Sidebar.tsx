@@ -15,7 +15,8 @@ import {
   Clapperboard,
   Menu,
   X,
-  PhoneCall
+  PhoneCall,
+  HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,9 @@ export default function Sidebar({ currentView, setCurrentView, isOpen, setIsOpen
     { id: 'services', label: 'Business Services', icon: Briefcase },
     { id: 'addons', label: 'Add-on Services', icon: Layers },
     { id: 'showcase', label: 'Media Gallery', icon: Clapperboard },
+    { id: 'stats', label: 'Trust Stats', icon: Sparkles },
+    { id: 'testimonials', label: 'Testimonials', icon: MessageSquareCode },
+    { id: 'faq', label: 'FAQ', icon: HelpCircle },
     { id: 'ai-advisor', label: 'AI Advisor Text', icon: Sparkles },
     { id: 'general-content', label: 'Home Page Text', icon: Settings },
     { id: 'contact', label: 'Contact & Footer', icon: PhoneCall },

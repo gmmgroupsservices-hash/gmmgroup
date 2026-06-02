@@ -40,6 +40,9 @@ interface PropertyManagerProps {
 
 const MAX_IMAGES_PER_PROPERTY = 8;
 const MAX_VIDEOS_PER_PROPERTY = 2;
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -48,6 +51,31 @@ const readFileAsDataUrl = (file: File) =>
     reader.onerror = () => reject(reader.error ?? new Error(`Unable to read file ${file.name}`));
     reader.readAsDataURL(file);
   });
+
+const uploadFileViaBackend = async (file: File, mediaType: 'image' | 'video', folder: string) => {
+  const fileData = await readFileAsDataUrl(file);
+  const response = await fetch(`${API_BASE}/api/media/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getAdminToken()}`
+    },
+    body: JSON.stringify({
+      fileData,
+      fileName: file.name,
+      folder,
+      mediaType
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData?.details || errorData?.error || `Upload failed for ${file.name}`);
+  }
+
+  const payload = await response.json();
+  return payload.url as string;
+};
 
 const stripExtension = (fileName: string) => fileName.replace(/\.[^.]+$/, '');
 const prettyFileLabel = (fileName: string) =>
@@ -168,7 +196,7 @@ export default function PropertyManager({
 
       const uploadedImages = await Promise.all(selectedFiles.map(async (file, index) => ({
         id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 4)}-${index}`,
-        url: await readFileAsDataUrl(file),
+        url: await uploadFileViaBackend(file, 'image', 'gmm/properties/images'),
         isCoverOrPrimary: editingProp.images.length === 0 && index === 0,
         type: 'image' as const,
         title: customImageTitle.trim()
@@ -212,7 +240,7 @@ export default function PropertyManager({
 
       const uploadedVideos = await Promise.all(selectedFiles.map(async (file, index) => ({
         id: `vid-${Date.now()}-${Math.random().toString(36).substr(2, 4)}-${index}`,
-        url: await readFileAsDataUrl(file),
+        url: await uploadFileViaBackend(file, 'video', 'gmm/properties/videos'),
         isCoverOrPrimary: editingProp.videos.length === 0 && index === 0,
         type: 'video' as const,
         title: customVideoTitle.trim()

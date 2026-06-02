@@ -61,6 +61,30 @@ export interface ShowcaseReel {
   status: 'Published' | 'Draft';
 }
 
+export interface FeatureStatItem {
+  id: string;
+  stat: string;
+  label: string;
+  description: string;
+  status: 'Published' | 'Draft';
+}
+
+export interface TestimonialItem {
+  id: string;
+  name: string;
+  role: string;
+  quote: string;
+  avatar: string;
+  status: 'Published' | 'Draft';
+}
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  status: 'Published' | 'Draft';
+}
+
 export interface ContactDetails {
   phone: string;
   whatsappNumber: string;
@@ -97,7 +121,7 @@ export interface NavbarLabel {
 
 export interface RecentActivity {
   id: string;
-  type: 'property' | 'service' | 'addon' | 'media' | 'general' | 'seo';
+  type: 'property' | 'service' | 'addon' | 'media' | 'general' | 'seo' | 'testimonial' | 'faq';
   action: 'create' | 'update' | 'delete' | 'publish' | 'unpublish';
   details: string;
   timestamp: string;

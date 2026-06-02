@@ -2,19 +2,61 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
-import { INITIAL_PROPERTIES as PUBLIC_INITIAL_PROPERTIES, SERVICES as PUBLIC_SERVICES, REELS as PUBLIC_REELS } from "../frontend/src/data";
+import { v2 as cloudinary } from "cloudinary";
+import { config as loadEnv } from "dotenv";
+import {
+  INITIAL_PROPERTIES as PUBLIC_INITIAL_PROPERTIES,
+  SERVICES as PUBLIC_SERVICES,
+  REELS as PUBLIC_REELS,
+  FEATURES_GRID as PUBLIC_FEATURES_GRID,
+  TESTIMONIALS as PUBLIC_TESTIMONIALS,
+  FAQS as PUBLIC_FAQS
+} from "../frontend/src/data";
 import { Property as PublicProperty, Lead } from "../frontend/src/types";
 import {
   Property as AdminProperty,
   ServiceItem as AdminServiceItem,
   AddOnItem as AdminAddOnItem,
   ShowcaseReel as AdminShowcaseReel,
+  FeatureStatItem as AdminFeatureStatItem,
+  TestimonialItem as AdminTestimonialItem,
+  FAQItem as AdminFAQItem,
   ContactDetails as AdminContactDetails,
   HeroContent as AdminHeroContent,
   AIAdvisorConfig as AdminAIAdvisorConfig,
   NavbarLabel as AdminNavbarLabel,
   RecentActivity as AdminRecentActivity
-} from "../admin-panel/src/types";
+} from "../admin/src/types";
+
+const cwd = process.cwd();
+const runningFromBackendFolder = path.basename(cwd) === "backend";
+const backendDir = runningFromBackendFolder ? cwd : path.resolve(cwd, "backend");
+const repoRoot = runningFromBackendFolder ? path.resolve(cwd, "..") : cwd;
+
+loadEnv({ path: path.resolve(backendDir, ".env") });
+loadEnv({ path: path.resolve(repoRoot, ".env") });
+
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "gmmadmin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "gmmadmin123";
+const ADMIN_SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN || "gmm-admin-session";
+
+const cloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_URL ||
+  (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+);
+
+if (cloudinaryConfigured) {
+  if (process.env.CLOUDINARY_URL) {
+    cloudinary.config({ secure: true });
+  } else {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true
+    });
+  }
+}
 
 // Seed server-side state in memory so CRUD persists during dev-session
 const toAdminProperty = (property: PublicProperty): AdminProperty => {
@@ -121,6 +163,30 @@ const ADMIN_REELS: AdminShowcaseReel[] = PUBLIC_REELS.map((reel, index) => ({
   status: "Published"
 }));
 
+const ADMIN_FEATURE_STATS: AdminFeatureStatItem[] = PUBLIC_FEATURES_GRID.map((feature, index) => ({
+  id: `stat-${index + 1}`,
+  stat: feature.stat,
+  label: feature.label,
+  description: feature.description,
+  status: "Published"
+}));
+
+const ADMIN_TESTIMONIALS: AdminTestimonialItem[] = PUBLIC_TESTIMONIALS.map((testimonial, index) => ({
+  id: `testi-${index + 1}`,
+  name: testimonial.name,
+  role: testimonial.role,
+  quote: testimonial.quote,
+  avatar: testimonial.avatar,
+  status: "Published"
+}));
+
+const ADMIN_FAQS: AdminFAQItem[] = PUBLIC_FAQS.map((faq, index) => ({
+  id: `faq-${index + 1}`,
+  question: faq.question,
+  answer: faq.answer,
+  status: "Published"
+}));
+
 const ADMIN_CONTACT_DETAILS: AdminContactDetails = {
   phone: "+91 80 4492 1000",
   whatsappNumber: "+91 98765 43210",
@@ -199,6 +265,9 @@ type AdminSiteContent = {
   services: AdminServiceItem[];
   addons: AdminAddOnItem[];
   reels: AdminShowcaseReel[];
+  featureStats: AdminFeatureStatItem[];
+  testimonials: AdminTestimonialItem[];
+  faqs: AdminFAQItem[];
   contactDetails: AdminContactDetails;
   heroContent: AdminHeroContent;
   aiAdvisorConfig: AdminAIAdvisorConfig;
@@ -206,22 +275,55 @@ type AdminSiteContent = {
   activities: AdminRecentActivity[];
 };
 
-let siteContent: AdminSiteContent = {
+const createDefaultAdminSiteContent = (): AdminSiteContent => ({
   properties: PUBLIC_INITIAL_PROPERTIES.map(toAdminProperty),
   services: [...ADMIN_SERVICES],
   addons: [...ADMIN_ADDONS],
   reels: [...ADMIN_REELS],
+  featureStats: [...ADMIN_FEATURE_STATS],
+  testimonials: [...ADMIN_TESTIMONIALS],
+  faqs: [...ADMIN_FAQS],
   contactDetails: { ...ADMIN_CONTACT_DETAILS },
   heroContent: { ...ADMIN_HERO },
   aiAdvisorConfig: { ...ADMIN_AI_CONFIG },
   navbarLabels: [...ADMIN_NAVBAR_LABELS],
   activities: [...ADMIN_ACTIVITIES]
-};
+});
+
+const isBlankAdminSiteContent = (content: AdminSiteContent) =>
+  content.properties.length === 0 &&
+  content.services.length === 0 &&
+  content.addons.length === 0 &&
+  content.reels.length === 0 &&
+  content.featureStats.length === 0 &&
+  content.testimonials.length === 0 &&
+  content.faqs.length === 0 &&
+  !content.heroContent.title &&
+  !content.contactDetails.email &&
+  !content.aiAdvisorConfig.bannerTitle &&
+  content.navbarLabels.length === 0;
+
+let siteContent: AdminSiteContent = createDefaultAdminSiteContent();
 
 const app = express();
 app.use(express.json({ limit: "100mb" }));
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.BACKEND_PORT) || 3000;
+
+const getBearerToken = (req: express.Request) => {
+  const header = req.headers.authorization || "";
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  return match?.[1] || "";
+};
+
+const requireAdminSession = (req: express.Request, res: express.Response) => {
+  const token = getBearerToken(req);
+  if (token !== ADMIN_SESSION_TOKEN) {
+    res.status(401).json({ error: "Unauthorized" });
+    return false;
+  }
+  return true;
+};
 
 // Lazy initialize Gemini API client to prevent startup failure if key is missing
 let aiClient: GoogleGenAI | null = null;
@@ -281,10 +383,15 @@ app.delete("/api/properties/:id", (req, res) => {
 });
 
 app.get("/api/admin/site-content", (req, res) => {
+  if (!requireAdminSession(req, res)) return;
+  if (isBlankAdminSiteContent(siteContent)) {
+    siteContent = createDefaultAdminSiteContent();
+  }
   res.json(siteContent);
 });
 
 app.put("/api/admin/site-content", (req, res) => {
+  if (!requireAdminSession(req, res)) return;
   siteContent = {
     ...siteContent,
     ...req.body,
@@ -292,6 +399,9 @@ app.put("/api/admin/site-content", (req, res) => {
     services: Array.isArray(req.body.services) ? req.body.services : siteContent.services,
     addons: Array.isArray(req.body.addons) ? req.body.addons : siteContent.addons,
     reels: Array.isArray(req.body.reels) ? req.body.reels : siteContent.reels,
+    featureStats: Array.isArray(req.body.featureStats) ? req.body.featureStats : siteContent.featureStats,
+    testimonials: Array.isArray(req.body.testimonials) ? req.body.testimonials : siteContent.testimonials,
+    faqs: Array.isArray(req.body.faqs) ? req.body.faqs : siteContent.faqs,
     navbarLabels: Array.isArray(req.body.navbarLabels) ? req.body.navbarLabels : siteContent.navbarLabels,
     activities: Array.isArray(req.body.activities) ? req.body.activities : siteContent.activities,
     contactDetails: req.body.contactDetails ?? siteContent.contactDetails,
@@ -301,8 +411,72 @@ app.put("/api/admin/site-content", (req, res) => {
   res.json(siteContent);
 });
 
+app.post("/api/admin/login", (req, res) => {
+  const { username, password } = req.body ?? {};
+
+  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  res.json({
+    token: ADMIN_SESSION_TOKEN,
+    user: {
+      username: ADMIN_USERNAME,
+      role: "administrator"
+    }
+  });
+});
+
 app.get("/api/site-content", (req, res) => {
   res.json(siteContent);
+});
+
+app.post("/api/media/upload", async (req, res) => {
+  try {
+    if (!requireAdminSession(req, res)) return;
+
+    const { fileData, fileName, folder, mediaType } = req.body ?? {};
+
+    if (!fileData || typeof fileData !== "string") {
+      return res.status(400).json({ error: "fileData is required" });
+    }
+
+    if (!cloudinaryConfigured) {
+      return res.status(500).json({
+        error: "Cloudinary is not configured on the backend",
+        hint: "Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your backend environment."
+      });
+    }
+
+    const resourceType = mediaType === "video" ? "video" : "image";
+    const safeFolder = typeof folder === "string" && folder.trim() ? folder.trim() : "gmm";
+    const publicId = typeof fileName === "string" && fileName.trim()
+      ? path.parse(fileName.trim()).name.replace(/\s+/g, "-").toLowerCase()
+      : `${resourceType}-${Date.now()}`;
+
+    const uploadResult = await cloudinary.uploader.upload(fileData, {
+      folder: safeFolder,
+      public_id: publicId,
+      resource_type: resourceType,
+      overwrite: false,
+      unique_filename: true
+    });
+
+    res.json({
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+      resourceType: uploadResult.resource_type,
+      bytes: uploadResult.bytes,
+      format: uploadResult.format,
+      originalFilename: uploadResult.original_filename
+    });
+  } catch (error: any) {
+    console.error("Cloudinary upload failed:", error);
+    res.status(500).json({
+      error: "Cloudinary upload failed",
+      details: error?.message || "Unknown upload error"
+    });
+  }
 });
 
 // REST API - Leads
@@ -458,15 +632,15 @@ async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     // Vite middleware for lightning-fast development serving
     const vite = await createViteServer({
-      root: path.resolve(process.cwd(), "frontend"),
-      configFile: path.resolve(process.cwd(), "frontend", "vite.config.ts"),
+      root: path.resolve(repoRoot, "frontend"),
+      configFile: path.resolve(repoRoot, "frontend", "vite.config.ts"),
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
     // Serve static compiled assets in production
-    const distPath = path.join(process.cwd(), "frontend", "dist");
+    const distPath = path.join(repoRoot, "frontend", "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));

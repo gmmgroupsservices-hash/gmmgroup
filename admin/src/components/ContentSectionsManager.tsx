@@ -37,6 +37,9 @@ import {
   ServiceItem, 
   AddOnItem, 
   ShowcaseReel, 
+  FeatureStatItem,
+  TestimonialItem,
+  FAQItem,
   ContactDetails, 
   HeroContent, 
   NavbarLabel 
@@ -50,6 +53,35 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
+
+const uploadFileViaBackend = async (file: File, mediaType: 'image' | 'video', folder: string) => {
+  const fileData = await readFileAsDataUrl(file);
+  const response = await fetch(`${API_BASE}/api/media/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getAdminToken()}`
+    },
+    body: JSON.stringify({
+      fileData,
+      fileName: file.name,
+      folder,
+      mediaType
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData?.details || errorData?.error || `Upload failed for ${file.name}`);
+  }
+
+  const payload = await response.json();
+  return payload.url as string;
+};
+
 const prettyFileLabel = (fileName: string) =>
   fileName
     .replace(/\.[^.]+$/, '')
@@ -58,7 +90,7 @@ const prettyFileLabel = (fileName: string) =>
     .trim();
 
 interface ContentSectionsManagerProps {
-  currentTab: 'services' | 'addons' | 'showcase' | 'general-content' | 'contact';
+  currentTab: 'services' | 'addons' | 'showcase' | 'stats' | 'testimonials' | 'faq' | 'general-content' | 'contact';
   
   heroContent: HeroContent;
   onSaveHeroContent: (updated: HeroContent) => void;
@@ -75,13 +107,25 @@ interface ContentSectionsManagerProps {
   onSaveReel: (item: ShowcaseReel) => void;
   onDeleteReel: (id: string) => void;
 
+  featureStats: FeatureStatItem[];
+  onSaveFeatureStat: (item: FeatureStatItem) => void;
+  onDeleteFeatureStat: (id: string) => void;
+
+  testimonials: TestimonialItem[];
+  onSaveTestimonial: (item: TestimonialItem) => void;
+  onDeleteTestimonial: (id: string) => void;
+
+  faqs: FAQItem[];
+  onSaveFaq: (item: FAQItem) => void;
+  onDeleteFaq: (id: string) => void;
+
   contactDetails: ContactDetails;
   onSaveContactDetails: (updated: ContactDetails) => void;
 
   navbarLabels: NavbarLabel[];
   onSaveNavbarLabels: (updated: NavbarLabel[]) => void;
 
-  onLogActivity: (type: 'service' | 'addon' | 'media' | 'general' | 'seo', action: string, details: string) => void;
+  onLogActivity: (type: 'service' | 'addon' | 'media' | 'general' | 'seo' | 'testimonial' | 'faq', action: string, details: string) => void;
 }
 
 export default function ContentSectionsManager({
@@ -97,6 +141,15 @@ export default function ContentSectionsManager({
   reels,
   onSaveReel,
   onDeleteReel,
+  featureStats,
+  onSaveFeatureStat,
+  onDeleteFeatureStat,
+  testimonials,
+  onSaveTestimonial,
+  onDeleteTestimonial,
+  faqs,
+  onSaveFaq,
+  onDeleteFaq,
   contactDetails,
   onSaveContactDetails,
   navbarLabels,
@@ -113,6 +166,15 @@ export default function ContentSectionsManager({
 
   const [editingReel, setEditingReel] = useState<ShowcaseReel | null>(null);
   const [isReelNew, setIsReelNew] = useState(false);
+
+  const [editingFeatureStat, setEditingFeatureStat] = useState<FeatureStatItem | null>(null);
+  const [isFeatureStatNew, setIsFeatureStatNew] = useState(false);
+
+  const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
+  const [isTestimonialNew, setIsTestimonialNew] = useState(false);
+
+  const [editingFaq, setEditingFaq] = useState<FAQItem | null>(null);
+  const [isFaqNew, setIsFaqNew] = useState(false);
 
   // States inside General Hero Contents
   const [tempHero, setTempHero] = useState<HeroContent>({ ...heroContent });
@@ -200,6 +262,75 @@ export default function ContentSectionsManager({
     setEditingReel(null);
   };
 
+  const handleCreateFeatureStat = () => {
+    setIsFeatureStatNew(true);
+    setEditingFeatureStat({
+      id: `stat-${Date.now()}`,
+      stat: '',
+      label: '',
+      description: '',
+      status: 'Draft'
+    });
+  };
+
+  const handleSaveFeatureStat = () => {
+    if (!editingFeatureStat || !editingFeatureStat.stat.trim() || !editingFeatureStat.label.trim()) return;
+    onSaveFeatureStat(editingFeatureStat);
+    onLogActivity(
+      'general',
+      isFeatureStatNew ? 'create' : 'update',
+      `${isFeatureStatNew ? 'Created' : 'Updated'} feature stat: "${editingFeatureStat.label}"`
+    );
+    setEditingFeatureStat(null);
+    setIsFeatureStatNew(false);
+  };
+
+  const handleCreateTestimonial = () => {
+    setIsTestimonialNew(true);
+    setEditingTestimonial({
+      id: `testi-${Date.now()}`,
+      name: '',
+      role: '',
+      quote: '',
+      avatar: '',
+      status: 'Draft'
+    });
+  };
+
+  const handleSaveTestimonial = () => {
+    if (!editingTestimonial || !editingTestimonial.name.trim() || !editingTestimonial.quote.trim()) return;
+    onSaveTestimonial(editingTestimonial);
+    onLogActivity(
+      'testimonial',
+      isTestimonialNew ? 'create' : 'update',
+      `${isTestimonialNew ? 'Created' : 'Updated'} testimonial: "${editingTestimonial.name}"`
+    );
+    setEditingTestimonial(null);
+    setIsTestimonialNew(false);
+  };
+
+  const handleCreateFaq = () => {
+    setIsFaqNew(true);
+    setEditingFaq({
+      id: `faq-${Date.now()}`,
+      question: '',
+      answer: '',
+      status: 'Draft'
+    });
+  };
+
+  const handleSaveFaq = () => {
+    if (!editingFaq || !editingFaq.question.trim() || !editingFaq.answer.trim()) return;
+    onSaveFaq(editingFaq);
+    onLogActivity(
+      'faq',
+      isFaqNew ? 'create' : 'update',
+      `${isFaqNew ? 'Created' : 'Updated'} FAQ: "${editingFaq.question}"`
+    );
+    setEditingFaq(null);
+    setIsFaqNew(false);
+  };
+
   const handleHeroBackgroundUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     try {
@@ -208,7 +339,7 @@ export default function ContentSectionsManager({
         alert('Please choose an image file.');
         return;
       }
-      const uploadedBackground = await readFileAsDataUrl(file);
+      const uploadedBackground = await uploadFileViaBackend(file, 'image', 'gmm/homepage');
       setTempHero(prev => ({ ...prev, backgroundImage: uploadedBackground }));
     } catch (error) {
       console.error('Failed to upload hero background:', error);
@@ -224,7 +355,7 @@ export default function ContentSectionsManager({
         alert('Please choose a video file.');
         return;
       }
-      const uploadedVideo = await readFileAsDataUrl(file);
+      const uploadedVideo = await uploadFileViaBackend(file, 'video', 'gmm/reels/videos');
       setEditingReel({
         ...editingReel,
         videoUrl: uploadedVideo,
@@ -244,7 +375,7 @@ export default function ContentSectionsManager({
         alert('Please choose an image file.');
         return;
       }
-      const uploadedThumbnail = await readFileAsDataUrl(file);
+      const uploadedThumbnail = await uploadFileViaBackend(file, 'image', 'gmm/reels/thumbnails');
       setEditingReel({
         ...editingReel,
         thumbnailUrl: uploadedThumbnail
@@ -252,6 +383,25 @@ export default function ContentSectionsManager({
     } catch (error) {
       console.error('Failed to upload reel thumbnail:', error);
       alert('The reel thumbnail could not be uploaded. Please try again.');
+    }
+  };
+
+  const handleTestimonialAvatarUpload = async (files: FileList | null) => {
+    if (!editingTestimonial || !files || files.length === 0) return;
+    try {
+      const file = Array.from(files).find(item => item.type.startsWith('image/'));
+      if (!file) {
+        alert('Please choose an image file.');
+        return;
+      }
+      const uploadedAvatar = await uploadFileViaBackend(file, 'image', 'gmm/testimonials');
+      setEditingTestimonial({
+        ...editingTestimonial,
+        avatar: uploadedAvatar
+      });
+    } catch (error) {
+      console.error('Failed to upload testimonial avatar:', error);
+      alert('The testimonial avatar could not be uploaded. Please try again.');
     }
   };
 
@@ -833,6 +983,416 @@ export default function ContentSectionsManager({
                     Save Reel
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* RENDER TAB 4: FEATURE STATS */}
+      {currentTab === 'stats' && (
+        <div className="space-y-6">
+          {!editingFeatureStat ? (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white font-sans flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-emerald-400" />
+                    Trust Stats ({featureStats.length})
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Manage the performance counters shown in the sovereign performance section.
+                  </p>
+                </div>
+                <button
+                  onClick={handleCreateFeatureStat}
+                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition shadow active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Stat
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {featureStats.map((item) => (
+                  <div key={item.id} className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-white">{item.stat}</p>
+                        <p className="text-sm font-semibold text-zinc-100">{item.label}</p>
+                        <p className="text-xs text-zinc-400 leading-relaxed">{item.description}</p>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase font-mono ${item.status === 'Published' ? 'bg-emerald-950/60 text-emerald-400' : 'bg-zinc-900 text-zinc-500'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                      <button
+                        onClick={() => { setEditingFeatureStat({ ...item }); setIsFeatureStatNew(false); }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 hover:bg-zinc-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete stat "${item.label}"?`)) {
+                            onDeleteFeatureStat(item.id);
+                            onLogActivity('general', 'delete', `Deleted feature stat "${item.label}"`);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-rose-400 hover:border-rose-900/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-6 space-y-6">
+              <h3 className="text-md font-bold text-white border-b border-zinc-900 pb-3">
+                {isFeatureStatNew ? 'Add Trust Stat' : `Edit Trust Stat: ${editingFeatureStat.label || 'Untitled'}`}
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Stat Value</label>
+                  <input
+                    type="text"
+                    value={editingFeatureStat.stat}
+                    onChange={(e) => setEditingFeatureStat({ ...editingFeatureStat, stat: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Label</label>
+                  <input
+                    type="text"
+                    value={editingFeatureStat.label}
+                    onChange={(e) => setEditingFeatureStat({ ...editingFeatureStat, label: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">Description</label>
+                <textarea
+                  rows={4}
+                  value={editingFeatureStat.description}
+                  onChange={(e) => setEditingFeatureStat({ ...editingFeatureStat, description: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl p-3 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-xl border border-zinc-800 w-fit">
+                <span className="text-xs text-zinc-400 font-sans">State:</span>
+                <button
+                  onClick={() => setEditingFeatureStat({ ...editingFeatureStat, status: editingFeatureStat.status === 'Published' ? 'Draft' : 'Published' })}
+                  className={`text-[10px] px-2.5 py-1 rounded-md font-bold transition-all uppercase ${
+                    editingFeatureStat.status === 'Published'
+                      ? 'bg-emerald-900/40 text-emerald-400'
+                      : 'bg-zinc-800 text-zinc-500'
+                  }`}
+                >
+                  {editingFeatureStat.status}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-900 flex justify-end gap-2">
+                <button
+                  onClick={() => { setEditingFeatureStat(null); setIsFeatureStatNew(false); }}
+                  className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveFeatureStat}
+                  className="text-xs bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl transition"
+                >
+                  Save Stat
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* RENDER TAB 4: TESTIMONIALS */}
+      {currentTab === 'testimonials' && (
+        <div className="space-y-6">
+          {!editingTestimonial ? (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white font-sans flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-emerald-400" />
+                    Testimonials ({testimonials.length})
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Manage the client quotes displayed on the public website.
+                  </p>
+                </div>
+                <button
+                  onClick={handleCreateTestimonial}
+                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition shadow active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Testimonial
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {testimonials.map((item) => (
+                  <div key={item.id} className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.avatar}
+                          alt={item.name}
+                          referrerPolicy="no-referrer"
+                          className="w-12 h-12 rounded-2xl object-cover border border-zinc-800 bg-zinc-900"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-white">{item.name}</p>
+                          <p className="text-[11px] text-zinc-400">{item.role}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase font-mono ${item.status === 'Published' ? 'bg-emerald-950/60 text-emerald-400' : 'bg-zinc-900 text-zinc-500'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="text-xs leading-relaxed text-zinc-300">"{item.quote}"</p>
+                    <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                      <button
+                        onClick={() => { setEditingTestimonial({ ...item }); setIsTestimonialNew(false); }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 hover:bg-zinc-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete testimonial "${item.name}"?`)) {
+                            onDeleteTestimonial(item.id);
+                            onLogActivity('testimonial', 'delete', `Deleted testimonial "${item.name}"`);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-rose-400 hover:border-rose-900/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-6 space-y-6">
+              <h3 className="text-md font-bold text-white border-b border-zinc-900 pb-3">
+                {isTestimonialNew ? 'Add Testimonial' : `Edit Testimonial: ${editingTestimonial.name || 'Untitled'}`}
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Client Name</label>
+                  <input
+                    type="text"
+                    value={editingTestimonial.name}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, name: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Role / Designation</label>
+                  <input
+                    type="text"
+                    value={editingTestimonial.role}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, role: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">Quote</label>
+                <textarea
+                  rows={4}
+                  value={editingTestimonial.quote}
+                  onChange={(e) => setEditingTestimonial({ ...editingTestimonial, quote: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl p-3 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">Upload Avatar Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    void handleTestimonialAvatarUpload(e.target.files);
+                    e.currentTarget.value = '';
+                  }}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl px-3 py-2 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-emerald-600 file:text-white file:px-3 file:py-1.5 file:cursor-pointer hover:file:bg-emerald-500"
+                />
+                <span className="text-[10px] text-zinc-500 font-mono">Use an uploaded image from your device.</span>
+              </div>
+
+              {editingTestimonial.avatar ? (
+                <img
+                  src={editingTestimonial.avatar}
+                  alt="Avatar preview"
+                  className="w-20 h-20 rounded-2xl object-cover border border-zinc-800"
+                />
+              ) : null}
+
+              <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-xl border border-zinc-800 w-fit">
+                <span className="text-xs text-zinc-400 font-sans">State:</span>
+                <button
+                  onClick={() => setEditingTestimonial({ ...editingTestimonial, status: editingTestimonial.status === 'Published' ? 'Draft' : 'Published' })}
+                  className={`text-[10px] px-2.5 py-1 rounded-md font-bold transition-all uppercase ${
+                    editingTestimonial.status === 'Published'
+                      ? 'bg-emerald-900/40 text-emerald-400'
+                      : 'bg-zinc-800 text-zinc-500'
+                  }`}
+                >
+                  {editingTestimonial.status}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-900 flex justify-end gap-2">
+                <button
+                  onClick={() => { setEditingTestimonial(null); setIsTestimonialNew(false); }}
+                  className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveTestimonial}
+                  className="text-xs bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl transition"
+                >
+                  Save Testimonial
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* RENDER TAB 5: FAQ */}
+      {currentTab === 'faq' && (
+        <div className="space-y-6">
+          {!editingFaq ? (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white font-sans flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5 text-emerald-400" />
+                    FAQ ({faqs.length})
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Edit the answers shown in the public FAQ section.
+                  </p>
+                </div>
+                <button
+                  onClick={handleCreateFaq}
+                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition shadow active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add FAQ
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {faqs.map((item) => (
+                  <div key={item.id} className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-white">{item.question}</p>
+                        <p className="text-xs text-zinc-400 leading-relaxed">{item.answer}</p>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase font-mono ${item.status === 'Published' ? 'bg-emerald-950/60 text-emerald-400' : 'bg-zinc-900 text-zinc-500'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                      <button
+                        onClick={() => { setEditingFaq({ ...item }); setIsFaqNew(false); }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 hover:bg-zinc-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete FAQ "${item.question}"?`)) {
+                            onDeleteFaq(item.id);
+                            onLogActivity('faq', 'delete', `Deleted FAQ "${item.question}"`);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-rose-400 hover:border-rose-900/30"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-zinc-950/40 border border-zinc-800 rounded-2xl p-6 space-y-6">
+              <h3 className="text-md font-bold text-white border-b border-zinc-900 pb-3">
+                {isFaqNew ? 'Add FAQ' : `Edit FAQ: ${editingFaq.question || 'Untitled'}`}
+              </h3>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Question</label>
+                  <input
+                    type="text"
+                    value={editingFaq.question}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, question: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-zinc-400">Answer</label>
+                  <textarea
+                    rows={4}
+                    value={editingFaq.answer}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, answer: e.target.value })}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl p-3 text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-xl border border-zinc-800 w-fit">
+                  <span className="text-xs text-zinc-400 font-sans">State:</span>
+                  <button
+                    onClick={() => setEditingFaq({ ...editingFaq, status: editingFaq.status === 'Published' ? 'Draft' : 'Published' })}
+                    className={`text-[10px] px-2.5 py-1 rounded-md font-bold transition-all uppercase ${
+                      editingFaq.status === 'Published'
+                        ? 'bg-emerald-900/40 text-emerald-400'
+                        : 'bg-zinc-800 text-zinc-500'
+                    }`}
+                  >
+                    {editingFaq.status}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-900 flex justify-end gap-2">
+                <button
+                  onClick={() => { setEditingFaq(null); setIsFaqNew(false); }}
+                  className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveFaq}
+                  className="text-xs bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl transition"
+                >
+                  Save FAQ
+                </button>
               </div>
             </div>
           )}

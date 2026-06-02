@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { X, MapPin, ShieldCheck, Mail, Phone, Calendar, Send, Compass, DollarSign } from "lucide-react";
-import { Property, Lead } from "../types";
+import { Property } from "../types";
 
 interface QuickViewModalProps {
   property: Property;
   onClose: () => void;
-  onNewLead: (lead: Omit<Lead, "id" | "timestamp" | "status">) => Promise<void>;
 }
 
-export default function QuickViewModal({ property, onClose, onNewLead }: QuickViewModalProps) {
+export default function QuickViewModal({ property, onClose }: QuickViewModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,13 +24,6 @@ export default function QuickViewModal({ property, onClose, onNewLead }: QuickVi
 
     setIsSubmitting(true);
     try {
-      await onNewLead({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        message: formData.message,
-        propertyTitle: property.title
-      });
       setSubmitted(true);
     } catch (err) {
       console.error(err);

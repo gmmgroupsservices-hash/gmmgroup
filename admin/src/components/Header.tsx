@@ -12,7 +12,8 @@ import {
   ExternalLink,
   Save,
   CheckCircle,
-  Clock
+  Clock,
+  LogOut
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,9 +21,10 @@ interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
   onQuickAction: (actionType: string) => void;
   isSaving?: boolean;
+  onLogout?: () => void;
 }
 
-export default function Header({ sidebarOpen, setSidebarOpen, onQuickAction, isSaving = false }: HeaderProps) {
+export default function Header({ sidebarOpen, setSidebarOpen, onQuickAction, isSaving = false, onLogout }: HeaderProps) {
   // Get formatted current date in local time or simple reader format
   const getFormattedDate = () => {
     const d = new Date();
@@ -108,6 +110,16 @@ export default function Header({ sidebarOpen, setSidebarOpen, onQuickAction, isS
             <p className="text-xs font-semibold text-zinc-100 italic">GMM Partner</p>
             <p className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Super Administrator</p>
           </div>
+          {onLogout ? (
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900 transition-all"
+              title="Log out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Log out</span>
+            </button>
+          ) : null}
         </div>
       </div>
     </header>

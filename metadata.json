@@ -1,6 +1,0 @@
-{
-  "name": "GMM Groups & Services",
-  "description": "An ultra-premium, futuristic real estate marketplace for luxury villas, apartments, plots, and commercial properties in India.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
