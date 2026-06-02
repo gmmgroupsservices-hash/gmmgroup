@@ -11,6 +11,7 @@ import DashboardOverview from './components/DashboardOverview';
 import PropertyManager from './components/PropertyManager';
 import ContentSectionsManager from './components/ContentSectionsManager';
 import AIAdvisorPreview from './components/AIAdvisorPreview';
+import AdminAccessManager from './components/AdminAccessManager';
 
 import {
   Property,
@@ -575,6 +576,14 @@ export default function App() {
               onSaveContactDetails={setContactDetails}
               navbarLabels={navbarLabels}
               onSaveNavbarLabels={setNavbarLabels}
+              onLogActivity={(type, action, details) => {
+                handleLogActivity(type, action as any, details);
+              }}
+            />
+          )}
+
+          {currentView === 'admin-access' && (
+            <AdminAccessManager
               onLogActivity={(type, action, details) => {
                 handleLogActivity(type, action as any, details);
               }}

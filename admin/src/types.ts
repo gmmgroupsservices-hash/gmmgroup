@@ -127,6 +127,13 @@ export interface RecentActivity {
   timestamp: string;
 }
 
+export interface AdminAccount {
+  id: string;
+  username: string;
+  password: string;
+  role: 'administrator';
+}
+
 export interface DashboardStats {
   totalProperties: number;
   featuredProperties: number;

@@ -17,6 +17,8 @@ import {
   X,
   PhoneCall,
   HelpCircle
+  ,
+  KeyRound
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +41,7 @@ export default function Sidebar({ currentView, setCurrentView, isOpen, setIsOpen
     { id: 'ai-advisor', label: 'AI Advisor Text', icon: Sparkles },
     { id: 'general-content', label: 'Home Page Text', icon: Settings },
     { id: 'contact', label: 'Contact & Footer', icon: PhoneCall },
+    { id: 'admin-access', label: 'Admin Access', icon: KeyRound },
   ];
 
   const handleNav = (viewId: string) => {

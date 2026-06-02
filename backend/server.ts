@@ -36,9 +36,22 @@ const repoRoot = runningFromBackendFolder ? path.resolve(cwd, "..") : cwd;
 loadEnv({ path: path.resolve(backendDir, ".env") });
 loadEnv({ path: path.resolve(repoRoot, ".env") });
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "gmmadmin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "gmmadmin123";
-const ADMIN_SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN || "gmm-admin-session";
+type AdminAccount = {
+  id: string;
+  username: string;
+  password: string;
+  role: "administrator";
+};
+
+const ADMIN_SESSION_TOKEN = "gmm-admin-session";
+let adminAccounts: AdminAccount[] = [
+  {
+    id: "admin-1",
+    username: "gmmadmin",
+    password: "gmmadmin123",
+    role: "administrator"
+  }
+];
 
 const cloudinaryConfigured = Boolean(
   process.env.CLOUDINARY_URL ||
@@ -470,6 +483,45 @@ app.get("/api/admin/site-content", (req, res) => {
   res.json(siteContent);
 });
 
+app.get("/api/admin/accounts", (req, res) => {
+  if (!requireAdminSession(req, res)) return;
+  res.json(
+    adminAccounts.map(account => ({
+      id: account.id,
+      username: account.username,
+      role: account.role
+    }))
+  );
+});
+
+app.put("/api/admin/accounts", (req, res) => {
+  if (!requireAdminSession(req, res)) return;
+  const accounts = Array.isArray(req.body?.accounts) ? req.body.accounts : [];
+
+  const normalizedAccounts = accounts
+    .filter((account: any) => typeof account?.username === "string" && typeof account?.password === "string")
+    .map((account: any, index: number): AdminAccount => ({
+      id: typeof account?.id === "string" && account.id ? account.id : `admin-${Date.now()}-${index}`,
+      username: account.username.trim(),
+      password: account.password,
+      role: "administrator"
+    }))
+    .filter(account => account.username.length > 0 && account.password.length > 0);
+
+  if (normalizedAccounts.length === 0) {
+    return res.status(400).json({ error: "At least one admin account is required" });
+  }
+
+  adminAccounts = normalizedAccounts;
+  res.json({
+    accounts: adminAccounts.map(account => ({
+      id: account.id,
+      username: account.username,
+      role: account.role
+    }))
+  });
+});
+
 app.put("/api/admin/site-content", (req, res) => {
   if (!requireAdminSession(req, res)) return;
   siteContent = {
@@ -497,15 +549,17 @@ app.put("/api/admin/site-content", (req, res) => {
 app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body ?? {};
 
-  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+  const matchedAccount = adminAccounts.find(account => account.username === username && account.password === password);
+  if (!matchedAccount) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
   res.json({
     token: ADMIN_SESSION_TOKEN,
     user: {
-      username: ADMIN_USERNAME,
-      role: "administrator"
+      id: matchedAccount.id,
+      username: matchedAccount.username,
+      role: matchedAccount.role
     }
   });
 });
