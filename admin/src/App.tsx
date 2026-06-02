@@ -421,7 +421,7 @@ export default function App() {
           </form>
 
           <p className="mt-5 text-[11px] text-zinc-500 leading-relaxed">
-            Default credentials are `gmmadmin` / `gmmadmin123` unless you change them in the backend env.
+            Default credentials are `gmmadmin` / `gmmadmin123`. You can change or add admins after signing in.
           </p>
         </div>
       </div>
