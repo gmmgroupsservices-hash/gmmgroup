@@ -383,6 +383,10 @@ app.use(express.json({ limit: "100mb" }));
 
 const PORT = Number(process.env.BACKEND_PORT) || 3000;
 
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, service: "gmm-backend" });
+});
+
 const getBearerToken = (req: express.Request) => {
   const header = req.headers.authorization || "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
