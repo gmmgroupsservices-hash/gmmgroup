@@ -5,7 +5,8 @@ await build({
   bundle: true,
   platform: 'node',
   format: 'cjs',
-  packages: 'external',
-  sourcemap: true,
-  outfile: 'dist/server.cjs'
+  external: ['vite', 'fsevents'],
+  sourcemap: false,
+  outfile: 'api/bundle.cjs'
 });
+

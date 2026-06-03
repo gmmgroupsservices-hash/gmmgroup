@@ -1,4 +1,5 @@
 // Vercel serverless entry point.
-// `npm run build` (esbuild) compiles server.ts → dist/server.cjs before this runs.
-const app = require("../dist/server.cjs");
+// `npm run build` (esbuild) compiles server.ts → api/bundle.cjs before this runs.
+const app = require('./bundle.cjs');
 module.exports = app.default ?? app;
+
