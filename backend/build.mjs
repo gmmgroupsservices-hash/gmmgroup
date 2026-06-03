@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { builtinModules } from 'module';
-import pkg from './package.json' assert { type: 'json' };
+import pkg from './package.json' with { type: 'json' };
+
 
 const dependencies = pkg.dependencies ? Object.keys(pkg.dependencies) : [];
 
