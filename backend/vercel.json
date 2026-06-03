@@ -1,12 +1,12 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "buildCommand": "npm run build",
-  "functions": {
-    "api/vercel-entry.js": {
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "api/vercel-entry.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
