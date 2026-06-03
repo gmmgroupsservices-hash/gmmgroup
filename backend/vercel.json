@@ -1,19 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "builds": [
-    {
-      "src": "api/[...path].ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["*.ts", "dist/**"]
-      }
+  "buildCommand": "npm run build",
+  "functions": {
+    "api/vercel-entry.js": {
+      "runtime": "nodejs20.x"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/[...path].ts"
+      "source": "/api/(.*)",
+      "destination": "/api/vercel-entry.js"
     }
   ]
 }
