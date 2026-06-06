@@ -94,7 +94,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   // Search & Filter state configurations
-  const [activeTab, setActiveTab] = useState("Buy");
+  const [activeTab, setActiveTab] = useState("All");
   const [searchText, setSearchText] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");

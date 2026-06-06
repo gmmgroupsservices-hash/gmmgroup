@@ -119,7 +119,7 @@ export default function Filters({
 
         {/* Tab Header Selector */}
         <div className="flex flex-wrap items-center gap-2 overflow-x-auto border-b border-white/5 pb-4 mb-6">
-          {["Buy", "Rent", "Just Sold", "Pre-approval", "Home Value", "Sell"].map((tab) => (
+          {["All", "Buy", "Rent", "Just Sold", "Pre-approval", "Home Value", "Sell"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -138,7 +138,7 @@ export default function Filters({
         </div>
 
         {/* TABS 1-3: PROPERTY DIRECTORIES SEARCH ENGINE */}
-        {(activeTab === "Buy" || activeTab === "Rent" || activeTab === "Just Sold") && (
+        {(activeTab === "All" || activeTab === "Buy" || activeTab === "Rent" || activeTab === "Just Sold") && (
           <div className="space-y-6">
             
             {/* Row 1: Instant search text lookup */}
@@ -151,7 +151,9 @@ export default function Filters({
                 placeholder={
                   activeTab === "Rent"
                     ? "Enter BHK size, apartment or commercial in Hyderabad/Bangalore (e.g. rent executive suites)"
-                    : "Try '4BHK Villa in Bangalore', 'Jubilee Hills Mansion' or 'Sovereign Plots'..."
+                    : activeTab === "All"
+                      ? "Search all GMM listings by property name, city, location, or type..."
+                      : "Try '4BHK Villa in Bangalore', 'Jubilee Hills Mansion' or 'Sovereign Plots'..."
                 }
                 className="w-full glass-input pl-12 pr-4 py-4 rounded-2xl text-sm tracking-wide shadow-inner"
               />
