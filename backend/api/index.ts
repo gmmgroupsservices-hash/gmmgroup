@@ -2,16 +2,15 @@ import express from "express";
 import path from "path";
 import { v2 as cloudinary } from "cloudinary";
 import { config as loadEnv } from "dotenv";
-import type { AdminAccount, PublicProperty, SiteContent } from "../types";
+import type { AdminAccount, PublicProperty, SiteContent } from "../types.ts";
 import {
   ADMIN_SESSION_TOKEN,
-  createDefaultSiteContent,
   getAdminAccounts,
   getPublicProperties,
   getSiteContent,
   setAdminAccounts,
   setSiteContent
-} from "../state";
+} from "../state.ts";
 
 const cwd = process.cwd();
 const runningFromBackendFolder = path.basename(cwd) === "backend";
