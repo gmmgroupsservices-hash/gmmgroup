@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { GoogleGenAI } from "@google/genai";
 import { v2 as cloudinary } from "cloudinary";
 import { config as loadEnv } from "dotenv";
@@ -34,6 +35,11 @@ const cwd = process.cwd();
 const runningFromBackendFolder = path.basename(cwd) === "backend";
 const backendDir = runningFromBackendFolder ? cwd : path.resolve(cwd, "backend");
 const repoRoot = runningFromBackendFolder ? path.resolve(cwd, "..") : cwd;
+const storageDir = process.env.VERCEL
+  ? path.resolve("/tmp", "gmm-backend-storage")
+  : path.resolve(backendDir, "storage");
+const siteContentFile = path.resolve(storageDir, "site-content.json");
+const adminAccountsFile = path.resolve(storageDir, "admin-accounts.json");
 
 loadEnv({ path: path.resolve(backendDir, ".env") });
 loadEnv({ path: path.resolve(repoRoot, ".env") });
@@ -341,6 +347,27 @@ const createDefaultAdminSiteContent = (): AdminSiteContent => ({
   activities: [...ADMIN_ACTIVITIES]
 });
 
+const mergeAdminSiteContent = (stored: Partial<AdminSiteContent> | null | undefined): AdminSiteContent => {
+  const defaults = createDefaultAdminSiteContent();
+
+  return {
+    ...defaults,
+    ...stored,
+    properties: Array.isArray(stored?.properties) ? stored.properties : defaults.properties,
+    services: Array.isArray(stored?.services) ? stored.services : defaults.services,
+    addons: Array.isArray(stored?.addons) ? stored.addons : defaults.addons,
+    reels: Array.isArray(stored?.reels) ? stored.reels : defaults.reels,
+    featureStats: Array.isArray(stored?.featureStats) ? stored.featureStats : defaults.featureStats,
+    testimonials: Array.isArray(stored?.testimonials) ? stored.testimonials : defaults.testimonials,
+    faqs: Array.isArray(stored?.faqs) ? stored.faqs : defaults.faqs,
+    navbarLabels: Array.isArray(stored?.navbarLabels) ? stored.navbarLabels : defaults.navbarLabels,
+    activities: Array.isArray(stored?.activities) ? stored.activities : defaults.activities,
+    contactDetails: stored?.contactDetails ?? defaults.contactDetails,
+    heroContent: stored?.heroContent ?? defaults.heroContent,
+    aiAdvisorConfig: stored?.aiAdvisorConfig ?? defaults.aiAdvisorConfig
+  };
+};
+
 const isBlankAdminSiteContent = (content: AdminSiteContent) =>
   content.properties.length === 0 &&
   content.services.length === 0 &&
@@ -354,7 +381,68 @@ const isBlankAdminSiteContent = (content: AdminSiteContent) =>
   !content.aiAdvisorConfig.bannerTitle &&
   content.navbarLabels.length === 0;
 
+const ensureStorageDir = () => {
+  mkdirSync(storageDir, { recursive: true });
+};
+
+const readJsonFile = <T,>(filePath: string): T | null => {
+  try {
+    if (!existsSync(filePath)) return null;
+    return JSON.parse(readFileSync(filePath, "utf-8")) as T;
+  } catch (error) {
+    console.error(`[GMM Server] Failed to read ${path.basename(filePath)}:`, error);
+    return null;
+  }
+};
+
+const writeJsonFile = (filePath: string, value: unknown) => {
+  try {
+    ensureStorageDir();
+    writeFileSync(filePath, JSON.stringify(value, null, 2), "utf-8");
+  } catch (error) {
+    console.error(`[GMM Server] Failed to write ${path.basename(filePath)}:`, error);
+  }
+};
+
+const syncAdminPropertiesFromPublicProperties = (nextProperties: PublicProperty[]) => {
+  siteContent.properties = nextProperties.map((property) => {
+    const existingAdminProperty = siteContent.properties.find((item) => item.id === property.id);
+    const mappedProperty = toAdminProperty(property);
+    return existingAdminProperty
+      ? {
+          ...existingAdminProperty,
+          ...mappedProperty,
+          images: existingAdminProperty.images?.length ? existingAdminProperty.images : mappedProperty.images,
+          videos: existingAdminProperty.videos?.length ? existingAdminProperty.videos : mappedProperty.videos
+        }
+      : mappedProperty;
+  });
+};
+
+const persistBackendState = () => {
+  writeJsonFile(siteContentFile, siteContent);
+  writeJsonFile(adminAccountsFile, adminAccounts);
+};
+
 let siteContent: AdminSiteContent = createDefaultAdminSiteContent();
+
+const persistedAdminAccounts = readJsonFile<AdminAccount[]>(adminAccountsFile);
+if (Array.isArray(persistedAdminAccounts) && persistedAdminAccounts.length > 0) {
+  adminAccounts = persistedAdminAccounts.filter(
+    (account): account is AdminAccount =>
+      typeof account?.id === "string" &&
+      typeof account?.username === "string" &&
+      typeof account?.password === "string" &&
+      account.role === "administrator"
+  );
+}
+
+const persistedSiteContent = readJsonFile<Partial<AdminSiteContent>>(siteContentFile);
+if (persistedSiteContent) {
+  siteContent = mergeAdminSiteContent(persistedSiteContent);
+}
+
+properties = siteContent.properties.map(toPublicProperty);
 
 const app = express();
 const allowedOriginPatterns = [
@@ -434,6 +522,8 @@ app.post("/api/properties", (req, res) => {
     newPropObject.id = `prop-${Date.now()}`;
   }
   properties.unshift(newPropObject);
+  syncAdminPropertiesFromPublicProperties(properties);
+  persistBackendState();
   res.status(201).json(newPropObject);
 });
 
@@ -442,6 +532,8 @@ app.put("/api/properties/:id", (req, res) => {
   const index = properties.findIndex(p => p.id === id);
   if (index !== -1) {
     properties[index] = { ...properties[index], ...req.body };
+    syncAdminPropertiesFromPublicProperties(properties);
+    persistBackendState();
     res.json(properties[index]);
   } else {
     res.status(404).json({ error: "Property not found" });
@@ -453,6 +545,8 @@ app.delete("/api/properties/:id", (req, res) => {
   const initialLength = properties.length;
   properties = properties.filter(p => p.id !== id);
   if (properties.length < initialLength) {
+    syncAdminPropertiesFromPublicProperties(properties);
+    persistBackendState();
     res.json({ success: true, id });
   } else {
     res.status(404).json({ error: "Property not found" });
@@ -463,6 +557,7 @@ app.get("/api/admin/site-content", (req, res) => {
   if (!requireAdminSession(req, res)) return;
   if (isBlankAdminSiteContent(siteContent)) {
     siteContent = createDefaultAdminSiteContent();
+    persistBackendState();
   }
   res.json(siteContent);
 });
@@ -497,6 +592,7 @@ app.put("/api/admin/accounts", (req, res) => {
   }
 
   adminAccounts = normalizedAccounts;
+  persistBackendState();
   res.json({
     accounts: adminAccounts.map(account => ({
       id: account.id,
@@ -527,6 +623,7 @@ app.put("/api/admin/site-content", (req, res) => {
   if (Array.isArray(siteContent.properties)) {
     properties = siteContent.properties.map(toPublicProperty);
   }
+  persistBackendState();
   res.json(siteContent);
 });
 
