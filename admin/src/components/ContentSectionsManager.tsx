@@ -55,10 +55,14 @@ const readFileAsDataUrl = (file: File) =>
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
 const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
 
 const uploadFileViaBackend = async (file: File, mediaType: 'image' | 'video', folder: string) => {
   const fileData = await readFileAsDataUrl(file);
+  if (getAdminToken() === DEMO_ADMIN_TOKEN) {
+    return fileData;
+  }
   const response = await fetch(`${API_BASE}/api/media/upload`, {
     method: 'POST',
     headers: {

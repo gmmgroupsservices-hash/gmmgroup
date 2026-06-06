@@ -9,6 +9,7 @@ import { AdminAccount } from '../types';
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
 const getAdminToken = () => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '';
 
 interface AdminAccessManagerProps {
@@ -26,6 +27,20 @@ export default function AdminAccessManager({ onLogActivity }: AdminAccessManager
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (getAdminToken() === DEMO_ADMIN_TOKEN) {
+      setAccounts([
+        {
+          id: 'demo-admin-1',
+          username: 'gmmadmin',
+          password: 'gmmadmin123',
+          role: 'administrator',
+          passwordHint: 'Demo mode account'
+        }
+      ]);
+      setLoading(false);
+      return;
+    }
+
     const loadAccounts = async () => {
       try {
         setLoading(true);
@@ -88,6 +103,17 @@ export default function AdminAccessManager({ onLogActivity }: AdminAccessManager
 
   const saveAccounts = async () => {
     setError('');
+    if (getAdminToken() === DEMO_ADMIN_TOKEN) {
+      setAccounts(prev =>
+        prev.map(account => ({
+          ...account,
+          passwordHint: 'Saved in demo mode'
+        }))
+      );
+      onLogActivity('general', 'update', 'Updated admin login accounts in demo mode');
+      return;
+    }
+
     if (accounts.length === 0) {
       setError('At least one admin account is required.');
       return;

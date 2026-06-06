@@ -12,6 +12,20 @@ import PropertyManager from './components/PropertyManager';
 import ContentSectionsManager from './components/ContentSectionsManager';
 import AIAdvisorPreview from './components/AIAdvisorPreview';
 import AdminAccessManager from './components/AdminAccessManager';
+import {
+  DEMO_ACTIVITIES,
+  DEMO_ADDONS,
+  DEMO_AI,
+  DEMO_CONTACT,
+  DEMO_FAQS,
+  DEMO_FEATURE_STATS,
+  DEMO_HERO,
+  DEMO_NAVBAR,
+  DEMO_PROPERTIES,
+  DEMO_REELS,
+  DEMO_SERVICES,
+  DEMO_TESTIMONIALS
+} from './demoContent';
 
 import {
   Property,
@@ -67,6 +81,7 @@ const EMPTY_NAVBAR_LABELS: NavbarLabel[] = [];
 const EMPTY_ACTIVITIES: RecentActivity[] = [];
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
 
 export default function App() {
   // Navigation tabs
@@ -76,6 +91,7 @@ export default function App() {
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '');
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => localStorage.getItem(ADMIN_STORAGE_KEY) === DEMO_ADMIN_TOKEN);
   const [loginUsername, setLoginUsername] = useState('gmmadmin');
   const [loginPassword, setLoginPassword] = useState('gmmadmin123');
   const [loginError, setLoginError] = useState('');
@@ -98,9 +114,18 @@ export default function App() {
 
   const clearAdminSession = () => {
     setAdminToken('');
+    setIsDemoMode(false);
     setIsInitialized(false);
     setHasLoadedContent(false);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
+  };
+
+  const setDemoSession = () => {
+    setAdminToken(DEMO_ADMIN_TOKEN);
+    setIsDemoMode(true);
+    setLoginError('');
+    localStorage.setItem(ADMIN_STORAGE_KEY, DEMO_ADMIN_TOKEN);
+    setIsAuthChecking(true);
   };
 
   useEffect(() => {
@@ -142,12 +167,48 @@ export default function App() {
       };
     };
 
+    const loadDemoContent = () => ({
+      properties: DEMO_PROPERTIES,
+      services: DEMO_SERVICES,
+      addons: DEMO_ADDONS,
+      reels: DEMO_REELS,
+      featureStats: DEMO_FEATURE_STATS,
+      testimonials: DEMO_TESTIMONIALS,
+      faqs: DEMO_FAQS,
+      contactDetails: DEMO_CONTACT,
+      heroContent: DEMO_HERO,
+      aiAdvisorConfig: DEMO_AI,
+      navbarLabels: DEMO_NAVBAR,
+      activities: DEMO_ACTIVITIES
+    });
+
     const loadContent = async () => {
       if (!adminToken) {
         if (!isCancelled) {
           setIsAuthChecking(false);
           setIsInitialized(false);
         }
+        return;
+      }
+
+      if (adminToken === DEMO_ADMIN_TOKEN) {
+        const content = loadDemoContent();
+        if (isCancelled) return;
+        setProperties(content.properties);
+        setServices(content.services);
+        setAddons(content.addons);
+        setReels(content.reels);
+        setFeatureStats(content.featureStats);
+        setTestimonials(content.testimonials);
+        setFaqs(content.faqs);
+        setContactDetails(content.contactDetails);
+        setHeroContent(content.heroContent);
+        setAiAdvisorConfig(content.aiAdvisorConfig);
+        setNavbarLabels(content.navbarLabels);
+        setActivities(content.activities);
+        setHasLoadedContent(true);
+        setIsInitialized(true);
+        setIsAuthChecking(false);
         return;
       }
 
@@ -204,7 +265,7 @@ export default function App() {
   }, [adminToken]);
 
   useEffect(() => {
-    if (!isInitialized || !hasLoadedContent || !adminToken) return;
+    if (!isInitialized || !hasLoadedContent || !adminToken || isDemoMode) return;
 
     const isEmptyPropertySet = properties.length === 0 &&
       services.length === 0 &&
@@ -272,7 +333,8 @@ export default function App() {
     navbarLabels,
     activities,
     hasLoadedContent,
-    adminToken
+    adminToken,
+    isDemoMode
   ]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -304,12 +366,17 @@ export default function App() {
 
       localStorage.setItem(ADMIN_STORAGE_KEY, payload.token);
       setAdminToken(payload.token);
+      setIsDemoMode(false);
       setIsAuthChecking(true);
     } catch (error) {
       setLoginError('Invalid username or password.');
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleDemoLogin = () => {
+    setDemoSession();
   };
 
   // Activity logger helper
@@ -417,6 +484,14 @@ export default function App() {
             >
               {isLoggingIn ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
               Sign in
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 transition-all"
+            >
+              Open Demo Panel
             </button>
           </form>
 
