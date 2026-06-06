@@ -26,6 +26,17 @@ import {
   SiteContent
 } from "./types";
 import { FEATURES_GRID, FAQS, INITIAL_PROPERTIES, REELS, SERVICES, TESTIMONIALS } from "./data";
+import {
+  DEMO_CONTENT_MESSAGE_TYPE,
+  DEMO_CONTENT_STORAGE_KEY,
+  DEMO_PREVIEW_READY_MESSAGE_TYPE,
+  DEMO_PREVIEW_SESSION_KEY,
+  isPublished,
+  mapContentPropertiesToPublic,
+  readDemoContent,
+  writeDemoContent,
+  type DemoSiteContent
+} from "./demoContentSync";
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "") : "";
 
@@ -73,6 +84,12 @@ export default function App() {
   const [contactDetails, setContactDetails] = useState<ContactDetails>(DEFAULT_CONTACT_DETAILS);
   const [heroContent, setHeroContent] = useState<HeroContent>(DEFAULT_HERO_CONTENT);
   const [navbarLabels, setNavbarLabels] = useState<NavbarLabel[]>(DEFAULT_NAVBAR_LABELS);
+  const [isDemoPreview] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.has("gmmDemo");
+    if (requested) window.sessionStorage.setItem(DEMO_PREVIEW_SESSION_KEY, "1");
+    return requested || window.sessionStorage.getItem(DEMO_PREVIEW_SESSION_KEY) === "1";
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,35 +122,58 @@ export default function App() {
   const [showCompareDrawer, setShowCompareDrawer] = useState(false);
   const [showToTopBtn, setShowToTopBtn] = useState(false);
 
+  const applySiteContent = (siteData: DemoSiteContent) => {
+    const mappedProperties = mapContentPropertiesToPublic(siteData.properties);
+    if (mappedProperties) setProperties(mappedProperties);
+    if (Array.isArray(siteData.services)) setServices(siteData.services.filter(isPublished));
+    if (Array.isArray(siteData.addons)) setAddons(siteData.addons.filter(isPublished));
+    if (Array.isArray(siteData.reels)) setReels(siteData.reels.filter(isPublished));
+    if (Array.isArray(siteData.featureStats)) setFeatureStats(siteData.featureStats.filter(isPublished));
+    if (Array.isArray(siteData.testimonials)) setTestimonials(siteData.testimonials.filter(isPublished));
+    if (Array.isArray(siteData.faqs)) setFaqs(siteData.faqs.filter(isPublished));
+    if (siteData.contactDetails) setContactDetails(siteData.contactDetails);
+    if (siteData.heroContent) setHeroContent(siteData.heroContent);
+    if (Array.isArray(siteData.navbarLabels)) setNavbarLabels(siteData.navbarLabels);
+  };
+
   // 1. Initial State synchronized fetch
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        if (isDemoPreview) {
+          const demoContent = readDemoContent();
+          if (demoContent) {
+            applySiteContent(demoContent);
+            setLoading(false);
+            return;
+          }
+        }
+
         const [siteRes, propsRes] = await Promise.all([
           fetch(`${API_BASE}/api/site-content`),
           fetch(`${API_BASE}/api/properties`)
         ]);
 
+        let nextProperties: Property[] | null = null;
+
         if (siteRes.ok) {
           const siteData: SiteContent = await siteRes.json();
-          if (Array.isArray(siteData.services)) setServices(siteData.services);
-          if (Array.isArray(siteData.addons)) setAddons(siteData.addons);
-          if (Array.isArray(siteData.reels)) setReels(siteData.reels);
-          if (Array.isArray(siteData.featureStats)) setFeatureStats(siteData.featureStats);
-          if (Array.isArray(siteData.testimonials)) setTestimonials(siteData.testimonials);
-          if (Array.isArray(siteData.faqs)) setFaqs(siteData.faqs);
-          if (siteData.contactDetails) setContactDetails(siteData.contactDetails);
-          if (siteData.heroContent) setHeroContent(siteData.heroContent);
-          if (Array.isArray(siteData.navbarLabels)) setNavbarLabels(siteData.navbarLabels);
+          applySiteContent(siteData as DemoSiteContent);
+          nextProperties = mapContentPropertiesToPublic((siteData as DemoSiteContent).properties);
         }
 
-        if (!propsRes.ok) throw new Error("API sync interrupted");
+        if (propsRes.ok) {
+          const propsData = await propsRes.json();
+          nextProperties = Array.isArray(propsData) ? propsData : nextProperties;
+        }
 
-        const propsData = await propsRes.json();
-        setProperties(Array.isArray(propsData) ? propsData : INITIAL_PROPERTIES);
+        setProperties(nextProperties ?? INITIAL_PROPERTIES);
       } catch (err) {
         console.warn("Backend endpoints unreachable. Falling back securely to static curated GMM catalog.", err);
+        setError("Backend sync unavailable. Showing curated static GMM catalog.");
         // Secure fallbacks to prevent screen breakage in environments without server-side routing instant starts!
         setProperties(INITIAL_PROPERTIES);
         setServices(SERVICES);
@@ -158,7 +198,40 @@ export default function App() {
     };
     window.addEventListener("scroll", handleScrollBtn);
     return () => window.removeEventListener("scroll", handleScrollBtn);
-  }, []);
+  }, [isDemoPreview]);
+
+  useEffect(() => {
+    if (!isDemoPreview) return;
+
+    const handleDemoMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; content?: DemoSiteContent } | null;
+      if (!data || data.type !== DEMO_CONTENT_MESSAGE_TYPE || !data.content) return;
+      writeDemoContent(data.content);
+      applySiteContent(data.content);
+      setLoading(false);
+      setError(null);
+    };
+
+    const handleDemoStorage = (event: StorageEvent) => {
+      if (event.key !== DEMO_CONTENT_STORAGE_KEY || !event.newValue) return;
+      try {
+        const content = JSON.parse(event.newValue) as DemoSiteContent;
+        applySiteContent(content);
+        setLoading(false);
+        setError(null);
+      } catch {
+        // Ignore a malformed demo payload without breaking the public site.
+      }
+    };
+
+    window.addEventListener("message", handleDemoMessage);
+    window.addEventListener("storage", handleDemoStorage);
+    window.opener?.postMessage({ type: DEMO_PREVIEW_READY_MESSAGE_TYPE }, "*");
+    return () => {
+      window.removeEventListener("message", handleDemoMessage);
+      window.removeEventListener("storage", handleDemoStorage);
+    };
+  }, [isDemoPreview]);
 
   // Sync favorites back to localStorage on change
   useEffect(() => {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LogIn, LockKeyhole, LoaderCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -13,19 +13,13 @@ import ContentSectionsManager from './components/ContentSectionsManager';
 import AIAdvisorPreview from './components/AIAdvisorPreview';
 import AdminAccessManager from './components/AdminAccessManager';
 import {
-  DEMO_ACTIVITIES,
-  DEMO_ADDONS,
-  DEMO_AI,
-  DEMO_CONTACT,
-  DEMO_FAQS,
-  DEMO_FEATURE_STATS,
-  DEMO_HERO,
-  DEMO_NAVBAR,
-  DEMO_PROPERTIES,
-  DEMO_REELS,
-  DEMO_SERVICES,
-  DEMO_TESTIMONIALS
-} from './demoContent';
+  DEMO_ADMIN_TOKEN,
+  DEMO_CONTENT_MESSAGE_TYPE,
+  DEMO_PREVIEW_READY_MESSAGE_TYPE,
+  type DemoSiteContent,
+  readDemoContent,
+  writeDemoContent
+} from './demoStorage';
 
 import {
   Property,
@@ -80,8 +74,11 @@ const EMPTY_FAQS: FAQItem[] = [];
 const EMPTY_NAVBAR_LABELS: NavbarLabel[] = [];
 const EMPTY_ACTIVITIES: RecentActivity[] = [];
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
+const FRONTEND_PREVIEW_URL = (
+  import.meta.env.VITE_FRONTEND_URL ??
+  (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gmmgroup.vercel.app')
+).replace(/\/$/, '');
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
-const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
 
 export default function App() {
   // Navigation tabs
@@ -96,6 +93,7 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState('gmmadmin123');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const previewWindowRef = useRef<Window | null>(null);
 
   // Live content state loaded from and saved to backend
   const [properties, setProperties] = useState<Property[]>(EMPTY_PROPERTIES);
@@ -111,6 +109,45 @@ export default function App() {
   const [navbarLabels, setNavbarLabels] = useState<NavbarLabel[]>(EMPTY_NAVBAR_LABELS);
   const [activities, setActivities] = useState<RecentActivity[]>(EMPTY_ACTIVITIES);
   const [hasLoadedContent, setHasLoadedContent] = useState(false);
+
+  const buildCurrentContent = (): DemoSiteContent => ({
+    properties,
+    services,
+    addons,
+    reels,
+    featureStats,
+    testimonials,
+    faqs,
+    contactDetails,
+    heroContent,
+    aiAdvisorConfig,
+    navbarLabels,
+    activities
+  });
+
+  const postDemoContentToPreview = (content: DemoSiteContent) => {
+    const previewWindow = previewWindowRef.current;
+    if (!previewWindow || previewWindow.closed) return;
+    previewWindow.postMessage(
+      {
+        type: DEMO_CONTENT_MESSAGE_TYPE,
+        content
+      },
+      '*'
+    );
+  };
+
+  const handlePreviewFrontend = () => {
+    const content = buildCurrentContent();
+    writeDemoContent(content);
+    const url = `${FRONTEND_PREVIEW_URL}${FRONTEND_PREVIEW_URL.includes('?') ? '&' : '?'}gmmDemo=1`;
+    const previewWindow = window.open(url, 'gmm-demo-frontend-preview');
+    if (!previewWindow) return;
+    previewWindowRef.current = previewWindow;
+    setTimeout(() => postDemoContentToPreview(content), 500);
+    setTimeout(() => postDemoContentToPreview(content), 1400);
+    setTimeout(() => postDemoContentToPreview(content), 3200);
+  };
 
   const clearAdminSession = () => {
     setAdminToken('');
@@ -167,21 +204,6 @@ export default function App() {
       };
     };
 
-    const loadDemoContent = () => ({
-      properties: DEMO_PROPERTIES,
-      services: DEMO_SERVICES,
-      addons: DEMO_ADDONS,
-      reels: DEMO_REELS,
-      featureStats: DEMO_FEATURE_STATS,
-      testimonials: DEMO_TESTIMONIALS,
-      faqs: DEMO_FAQS,
-      contactDetails: DEMO_CONTACT,
-      heroContent: DEMO_HERO,
-      aiAdvisorConfig: DEMO_AI,
-      navbarLabels: DEMO_NAVBAR,
-      activities: DEMO_ACTIVITIES
-    });
-
     const loadContent = async () => {
       if (!adminToken) {
         if (!isCancelled) {
@@ -192,7 +214,7 @@ export default function App() {
       }
 
       if (adminToken === DEMO_ADMIN_TOKEN) {
-        const content = loadDemoContent();
+        const content = readDemoContent();
         if (isCancelled) return;
         setProperties(content.properties);
         setServices(content.services);
@@ -265,7 +287,7 @@ export default function App() {
   }, [adminToken]);
 
   useEffect(() => {
-    if (!isInitialized || !hasLoadedContent || !adminToken || isDemoMode) return;
+    if (!isInitialized || !hasLoadedContent || !adminToken) return;
 
     const isEmptyPropertySet = properties.length === 0 &&
       services.length === 0 &&
@@ -281,6 +303,14 @@ export default function App() {
 
     if (isEmptyPropertySet) return;
 
+    const contentPayload = buildCurrentContent();
+
+    if (isDemoMode) {
+      writeDemoContent(contentPayload);
+      postDemoContentToPreview(contentPayload);
+      return;
+    }
+
     const controller = new AbortController();
     const persistContent = async () => {
       try {
@@ -290,20 +320,7 @@ export default function App() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`
           },
-          body: JSON.stringify({
-            properties,
-            services,
-            addons,
-            reels,
-            featureStats,
-            testimonials,
-            faqs,
-            contactDetails,
-            heroContent,
-            aiAdvisorConfig,
-            navbarLabels,
-            activities
-          }),
+          body: JSON.stringify(contentPayload),
           signal: controller.signal
         });
       } catch (error) {
@@ -335,6 +352,33 @@ export default function App() {
     hasLoadedContent,
     adminToken,
     isDemoMode
+  ]);
+
+  useEffect(() => {
+    if (!isDemoMode) return;
+
+    const handlePreviewReady = (event: MessageEvent) => {
+      const data = event.data as { type?: string } | null;
+      if (!data || data.type !== DEMO_PREVIEW_READY_MESSAGE_TYPE) return;
+      postDemoContentToPreview(buildCurrentContent());
+    };
+
+    window.addEventListener('message', handlePreviewReady);
+    return () => window.removeEventListener('message', handlePreviewReady);
+  }, [
+    isDemoMode,
+    properties,
+    services,
+    addons,
+    reels,
+    featureStats,
+    testimonials,
+    faqs,
+    contactDetails,
+    heroContent,
+    aiAdvisorConfig,
+    navbarLabels,
+    activities
   ]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -524,6 +568,8 @@ export default function App() {
           onQuickAction={handleHeaderQuickAction}
           isSaving={isSaving}
           onLogout={clearAdminSession}
+          isDemoMode={isDemoMode}
+          onPreviewFrontend={handlePreviewFrontend}
         />
 
         {/* Content body wrapper with fluid boundaries */}

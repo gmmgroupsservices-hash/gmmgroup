@@ -6,11 +6,9 @@
 import React from 'react';
 import { 
   Menu, 
-  Search, 
   PlusCircle, 
   Sparkles, 
   ExternalLink,
-  Save,
   CheckCircle,
   Clock,
   LogOut
@@ -22,9 +20,19 @@ interface HeaderProps {
   onQuickAction: (actionType: string) => void;
   isSaving?: boolean;
   onLogout?: () => void;
+  isDemoMode?: boolean;
+  onPreviewFrontend?: () => void;
 }
 
-export default function Header({ sidebarOpen, setSidebarOpen, onQuickAction, isSaving = false, onLogout }: HeaderProps) {
+export default function Header({
+  sidebarOpen,
+  setSidebarOpen,
+  onQuickAction,
+  isSaving = false,
+  onLogout,
+  isDemoMode = false,
+  onPreviewFrontend
+}: HeaderProps) {
   // Get formatted current date in local time or simple reader format
   const getFormattedDate = () => {
     const d = new Date();
@@ -79,6 +87,18 @@ export default function Header({ sidebarOpen, setSidebarOpen, onQuickAction, isS
 
         {/* Rapid Shortcut Actions */}
         <div className="flex items-center gap-2">
+          {isDemoMode && onPreviewFrontend ? (
+            <button
+              id="preview-frontend-btn"
+              onClick={onPreviewFrontend}
+              className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15 text-emerald-300 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+              title="Open frontend demo preview"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Preview Frontend</span>
+            </button>
+          ) : null}
+
           {/* Add property shortcut button */}
           <button
             id="quick-add-property-btn"
