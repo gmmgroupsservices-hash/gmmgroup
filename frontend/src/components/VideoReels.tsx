@@ -29,13 +29,13 @@ export default function VideoReels({ reels = REELS }: VideoReelsProps) {
         {/* Title Heading */}
         <div className="text-center max-w-3xl mx-auto border-b border-white/5 pb-12 mb-16">
           <span className="text-[10px] uppercase font-bold tracking-widest text-teal-300 px-3 py-1 bg-teal-500/10 rounded-full border border-teal-500/10 block w-fit mx-auto mb-4 font-outfit">
-            Cinematic Walkthroughs
+            Property Walkthroughs
           </span>
           <h2 className="text-3xl sm:text-4xl text-white font-display font-medium">
-            GMM <span className="text-gradient">Sovereign Video Reels</span>
+            GMM <span className="text-gradient">Property Showcase</span>
           </h2>
           <p className="text-xs sm:text-sm text-gray-400 font-light mt-2 max-w-xl mx-auto leading-relaxed">
-            Take an instant, vertical immersive journey across selected landmark penthouses and private estates. Click to play.
+            Explore selected property walkthroughs, project highlights, and visual previews. Click any card to play.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function VideoReels({ reels = REELS }: VideoReelsProps) {
                 <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
                   <span className="text-[9px] uppercase tracking-wider bg-black/60 backdrop-blur-sm text-teal-300 font-bold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 font-outfit">
                     <Video className="w-3 h-3 text-teal-400" />
-                    <span>Live Reel Walkthrough</span>
+                    <span>Live Property Walkthrough</span>
                   </span>
                   
                   <span className="text-[9px] font-mono bg-black/60 backdrop-blur-sm text-gray-300 px-2.5 py-0.5 rounded-full border border-white/10 font-bold">
@@ -118,7 +118,7 @@ export default function VideoReels({ reels = REELS }: VideoReelsProps) {
                   <div className="flex items-center space-x-1.5 pt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                     <span className="text-[9px] text-teal-300 uppercase tracking-widest font-outfit font-bold">
-                      GMM EXCLUSIVE PROPERTY VIEW
+                      GMM PROPERTY FEATURE
                     </span>
                   </div>
                 </div>

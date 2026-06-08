@@ -15,6 +15,8 @@ export interface Property {
   videoUrl?: string; // high-quality visual snippet url
   videoUrls?: string[];
   rera: boolean;
+  approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
+  approvalAuthority?: string;
   featured: boolean;
   description: string;
   highlights: string[];

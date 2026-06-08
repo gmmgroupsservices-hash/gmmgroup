@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LogIn, LockKeyhole, LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardOverview from './components/DashboardOverview';
@@ -87,13 +87,17 @@ export default function App() {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem(ADMIN_STORAGE_KEY) ?? '');
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => localStorage.getItem(ADMIN_STORAGE_KEY) === DEMO_ADMIN_TOKEN);
+  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem(ADMIN_STORAGE_KEY) ?? DEMO_ADMIN_TOKEN);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => (localStorage.getItem(ADMIN_STORAGE_KEY) ?? DEMO_ADMIN_TOKEN) === DEMO_ADMIN_TOKEN);
   const [loginUsername, setLoginUsername] = useState('gmmadmin');
   const [loginPassword, setLoginPassword] = useState('gmmadmin123');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const previewWindowRef = useRef<Window | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_STORAGE_KEY, adminToken);
+  }, [adminToken]);
 
   // Live content state loaded from and saved to backend
   const [properties, setProperties] = useState<Property[]>(EMPTY_PROPERTIES);
@@ -150,11 +154,11 @@ export default function App() {
   };
 
   const clearAdminSession = () => {
-    setAdminToken('');
-    setIsDemoMode(false);
+    setAdminToken(DEMO_ADMIN_TOKEN);
+    setIsDemoMode(true);
     setIsInitialized(false);
     setHasLoadedContent(false);
-    localStorage.removeItem(ADMIN_STORAGE_KEY);
+    localStorage.setItem(ADMIN_STORAGE_KEY, DEMO_ADMIN_TOKEN);
   };
 
   const setDemoSession = () => {
@@ -213,27 +217,6 @@ export default function App() {
         return;
       }
 
-      if (adminToken === DEMO_ADMIN_TOKEN) {
-        const content = readDemoContent();
-        if (isCancelled) return;
-        setProperties(content.properties);
-        setServices(content.services);
-        setAddons(content.addons);
-        setReels(content.reels);
-        setFeatureStats(content.featureStats);
-        setTestimonials(content.testimonials);
-        setFaqs(content.faqs);
-        setContactDetails(content.contactDetails);
-        setHeroContent(content.heroContent);
-        setAiAdvisorConfig(content.aiAdvisorConfig);
-        setNavbarLabels(content.navbarLabels);
-        setActivities(content.activities);
-        setHasLoadedContent(true);
-        setIsInitialized(true);
-        setIsAuthChecking(false);
-        return;
-      }
-
       try {
         const response = await fetch(`${API_BASE}/api/admin/site-content`, {
           headers: {
@@ -249,6 +232,12 @@ export default function App() {
         }
 
         let content = await response.json();
+        if (isBlankContent(content) && adminToken === DEMO_ADMIN_TOKEN) {
+          const demoContent = readDemoContent();
+          if (demoContent) {
+            content = demoContent;
+          }
+        }
         if (isBlankContent(content)) {
           content = await loadFallbackContent();
         }
@@ -305,12 +294,6 @@ export default function App() {
 
     const contentPayload = buildCurrentContent();
 
-    if (isDemoMode) {
-      writeDemoContent(contentPayload);
-      postDemoContentToPreview(contentPayload);
-      return;
-    }
-
     const controller = new AbortController();
     const persistContent = async () => {
       try {
@@ -323,6 +306,10 @@ export default function App() {
           body: JSON.stringify(contentPayload),
           signal: controller.signal
         });
+        if (isDemoMode) {
+          writeDemoContent(contentPayload);
+          postDemoContentToPreview(contentPayload);
+        }
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error('Failed to persist admin content:', error);
@@ -469,79 +456,6 @@ export default function App() {
         <div className="flex items-center gap-3 text-zinc-300">
           <LoaderCircle className="w-5 h-5 animate-spin text-indigo-400" />
           <span className="text-sm">Checking admin session...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!adminToken) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950/80 shadow-2xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-300">
-              <LockKeyhole className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Access</p>
-              <h1 className="text-2xl font-bold text-white">GMM Content Admin</h1>
-            </div>
-          </div>
-
-          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
-            Sign in with your admin credentials to manage properties, media, testimonials, FAQ, and homepage content.
-          </p>
-
-          <form className="space-y-4" onSubmit={handleAdminLogin}>
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wider text-zinc-500">Username</label>
-              <input
-                type="text"
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                className="w-full rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
-                placeholder="Enter username"
-                autoComplete="username"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wider text-zinc-500">Password</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
-                placeholder="Enter password"
-                autoComplete="current-password"
-              />
-            </div>
-
-            {loginError ? (
-              <p className="text-sm text-rose-400">{loginError}</p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={isLoggingIn}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 text-sm font-semibold text-white transition-all"
-            >
-              {isLoggingIn ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
-              Sign in
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 transition-all"
-            >
-              Open Demo Panel
-            </button>
-          </form>
-
-          <p className="mt-5 text-[11px] text-zinc-500 leading-relaxed">
-            Default credentials are `gmmadmin` / `gmmadmin123`. You can change or add admins after signing in.
-          </p>
         </div>
       </div>
     );

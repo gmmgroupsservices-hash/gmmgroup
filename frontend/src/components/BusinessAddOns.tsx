@@ -1,83 +1,18 @@
 import React, { useState } from "react";
-import { ArrowRight, Paintbrush, Hammer, HandCoins, BrickWall, ShieldCheck, CheckCircle2, PhoneCall } from "lucide-react";
+import { ArrowRight, ShieldCheck, CheckCircle2, PhoneCall } from "lucide-react";
 import { AddOnItem } from "../types";
+import { ADD_ON_PAGES, type AddOnPageId } from "../addOnContent";
 
-type AddOnId = "loans" | "interior" | "paints" | "fencing";
-
-type DefaultAddOn = AddOnItem & {
-  icon: React.ComponentType<{ className?: string }>;
-  accent: string;
-  details: string[];
-  cta: string;
-};
-
-const defaultAddOns: DefaultAddOn[] = [
-  {
-    id: "loans" as AddOnId,
-    title: "Home Loans",
-    icon: HandCoins,
-    accent: "from-emerald-500/20 to-teal-500/10",
-    details: [
-      "Loan eligibility review",
-      "Pre-approval assistance",
-      "Bank comparison support",
-      "EMI planning and guidance"
-    ],
-    description: "Get guided support for home loans, refinancing, and pre-approval workflows tied to your property search.",
-    cta: "Explore Loans"
-  },
-  {
-    id: "interior" as AddOnId,
-    title: "Interior Design",
-    icon: Hammer,
-    accent: "from-violet-500/20 to-indigo-500/10",
-    details: [
-      "Space planning",
-      "Modular kitchen concepts",
-      "Luxury finishes",
-      "Turnkey execution"
-    ],
-    description: "From layout ideas to premium finishing, we can connect interior concepts to the home you choose.",
-    cta: "View Interiors"
-  },
-  {
-    id: "paints" as AddOnId,
-    title: "Paint Works",
-    icon: Paintbrush,
-    accent: "from-sky-500/20 to-cyan-500/10",
-    details: [
-      "Exterior paint",
-      "Interior theme palettes",
-      "Waterproof coatings",
-      "Premium texture finishes"
-    ],
-    description: "Refresh homes and commercial spaces with color planning, premium coatings, and long-life finish options.",
-    cta: "See Paints"
-  },
-  {
-    id: "fencing" as AddOnId,
-    title: "Fencing Works",
-    icon: BrickWall,
-    accent: "from-orange-500/20 to-amber-500/10",
-    details: [
-      "Compound wall fencing",
-      "Property boundary security",
-      "Gate and grill works",
-      "Perimeter design consultation"
-    ],
-    description: "Secure and define your asset with fencing solutions for residential, commercial, and plotted layouts.",
-    cta: "Open Fencing"
-  }
-] as const;
+type DefaultAddOn = (typeof ADD_ON_PAGES)[number] & AddOnItem;
 
 interface BusinessAddOnsProps {
   addOns?: AddOnItem[];
 }
 
 export default function BusinessAddOns({ addOns }: BusinessAddOnsProps) {
-  const [active, setActive] = useState<AddOnId>("loans");
+  const [active, setActive] = useState<AddOnPageId>("loans");
 
-  const sourceAddOns: DefaultAddOn[] = defaultAddOns.map((base) => {
+  const sourceAddOns: DefaultAddOn[] = ADD_ON_PAGES.map((base) => {
     const override = addOns?.find((item) => item.id === base.id);
     return {
       ...base,
@@ -172,7 +107,7 @@ export default function BusinessAddOns({ addOns }: BusinessAddOnsProps) {
 
                 <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
                   <a
-                    href={`#${activeItem.id}`}
+                    href={`/${activeItem.id}`}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-teal-blue px-5 py-3 text-sm font-semibold text-white"
                   >
                     {activeItem.cta}

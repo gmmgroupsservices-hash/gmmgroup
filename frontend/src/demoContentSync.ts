@@ -43,6 +43,8 @@ interface AdminProperty {
   description: string;
   featured: boolean;
   reraFlag: boolean;
+  approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
+  approvalAuthority?: string;
   status?: "Published" | "Draft";
   images?: AdminMediaItem[];
   videos?: AdminMediaItem[];
@@ -131,6 +133,8 @@ export const mapContentPropertiesToPublic = (properties: Array<Property | AdminP
         videoUrl: videoUrls[0] || existing?.videoUrl,
         videoUrls,
         rera: Boolean(property.reraFlag),
+        approvalType: property.approvalType ?? (property.reraFlag ? "RERA" : "None"),
+        approvalAuthority: property.approvalAuthority,
         featured: Boolean(property.featured),
         description: property.description || existing?.description || "",
         highlights: existing?.highlights ?? [],

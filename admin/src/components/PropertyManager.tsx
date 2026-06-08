@@ -40,6 +40,7 @@ interface PropertyManagerProps {
 
 const MAX_IMAGES_PER_PROPERTY = 8;
 const MAX_VIDEOS_PER_PROPERTY = 2;
+const MAX_TOTAL_MEDIA_PER_PROPERTY = 10;
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
 const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
@@ -87,6 +88,16 @@ const prettyFileLabel = (fileName: string) =>
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+const normalizeApprovalType = (value?: Property['approvalType'], fallbackRera = false): NonNullable<Property['approvalType']> =>
+  value ?? (fallbackRera ? 'RERA' : 'None');
+const getApprovalDisplayLabel = (property: Property) => {
+  const approvalType = normalizeApprovalType(property.approvalType, property.reraFlag);
+  if (approvalType === 'Local Approval') {
+    return property.approvalAuthority?.trim() || 'Local Approval';
+  }
+  return approvalType;
+};
+const getTotalMediaCount = (property: Property) => (property.images?.length || 0) + (property.videos?.length || 0);
 
 export default function PropertyManager({
   properties,
@@ -133,6 +144,8 @@ export default function PropertyManager({
       description: '',
       featured: false,
       reraFlag: false,
+      approvalType: 'None',
+      approvalAuthority: '',
       status: 'Draft',
       images: [],
       videos: [],
@@ -159,6 +172,12 @@ export default function PropertyManager({
       alert('Please add at least 1 image for the property gallery');
       return;
     }
+    const approvalType = normalizeApprovalType(editingProp.approvalType, editingProp.reraFlag);
+    const approvalAuthority = (editingProp.approvalAuthority || '').trim();
+    if (approvalType === 'Local Approval' && !approvalAuthority) {
+      alert('Please enter the local authority name, for example HUDA, AHUDA, or NUDA');
+      return;
+    }
 
     // Ensure exactly 1 image is marked as cover
     const currentImages = [...editingProp.images];
@@ -167,7 +186,13 @@ export default function PropertyManager({
       currentImages[0].isCoverOrPrimary = true;
     }
 
-    const updatedProp = { ...editingProp, images: currentImages };
+    const updatedProp = {
+      ...editingProp,
+      images: currentImages,
+      approvalType,
+      approvalAuthority,
+      reraFlag: approvalType === 'RERA'
+    };
     onSaveProperty(updatedProp);
     
     // Log Activity
@@ -185,9 +210,11 @@ export default function PropertyManager({
     if (!editingProp) return;
     if (!files || files.length === 0) return;
     try {
-      const remaining = MAX_IMAGES_PER_PROPERTY - editingProp.images.length;
+      const totalRemaining = MAX_TOTAL_MEDIA_PER_PROPERTY - getTotalMediaCount(editingProp);
+      const imageRemaining = MAX_IMAGES_PER_PROPERTY - editingProp.images.length;
+      const remaining = Math.min(totalRemaining, imageRemaining);
       if (remaining <= 0) {
-        alert(`You can upload up to ${MAX_IMAGES_PER_PROPERTY} images maximum per property.`);
+        alert(`You can upload up to ${MAX_TOTAL_MEDIA_PER_PROPERTY} total media items per property: 8 images + 2 videos.`);
         return;
       }
       const selectedFiles = Array.from(files)
@@ -229,9 +256,11 @@ export default function PropertyManager({
     if (!editingProp) return;
     if (!files || files.length === 0) return;
     try {
-      const remaining = MAX_VIDEOS_PER_PROPERTY - editingProp.videos.length;
+      const totalRemaining = MAX_TOTAL_MEDIA_PER_PROPERTY - getTotalMediaCount(editingProp);
+      const videoRemaining = MAX_VIDEOS_PER_PROPERTY - editingProp.videos.length;
+      const remaining = Math.min(totalRemaining, videoRemaining);
       if (remaining <= 0) {
-        alert(`You can upload up to ${MAX_VIDEOS_PER_PROPERTY} videos maximum per property.`);
+        alert(`You can upload up to ${MAX_TOTAL_MEDIA_PER_PROPERTY} total media items per property: 8 images + 2 videos.`);
         return;
       }
       const selectedFiles = Array.from(files)
@@ -545,12 +574,12 @@ export default function PropertyManager({
                             </div>
                           </td>
 
-                          {/* RERA approval badge */}
+                          {/* Approval badge */}
                           <td className="py-4 px-4 text-center">
-                            {prop.reraFlag ? (
+                            {normalizeApprovalType(prop.approvalType, prop.reraFlag) !== 'None' ? (
                               <div className="inline-flex items-center gap-1 bg-emerald-950/40 border border-emerald-900/50 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-sans">
                                 <Award className="w-3 h-3" />
-                                Approved
+                                {getApprovalDisplayLabel(prop)}
                               </div>
                             ) : (
                               <span className="text-[10px] text-zinc-500 font-mono">N/A</span>
@@ -857,21 +886,53 @@ export default function PropertyManager({
               <div className="bg-zinc-900/30 border border-zinc-800/40 rounded-xl p-5 space-y-4">
                 <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans border-b border-zinc-900 pb-2">4. REGULATION & MARKET FEATHERING</h4>
                 
-                <div className="flex flex-wrap gap-6 text-xs text-zinc-200">
-                  {/* RERA */}
-                  <label id="lbl-editor-rera" className="flex items-center gap-2.5 cursor-pointer select-none">
-                    <input
-                      id="chk-editor-rera"
-                      type="checkbox"
-                      checked={editingProp.reraFlag}
-                      onChange={(e) => setEditingProp({ ...editingProp, reraFlag: e.target.checked })}
-                      className="rounded border-zinc-800 bg-zinc-950 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-zinc-900 w-4 h-4"
-                    />
-                    <div>
-                      <p className="font-semibold text-zinc-100">Official RERA Approved</p>
-                      <p className="text-[10px] text-zinc-500 font-mono">Appends regulatory compliance check badge</p>
+                <div className="flex flex-wrap gap-6 text-xs text-zinc-200 items-end">
+                  {/* Approval type */}
+                  <div className="min-w-[220px] space-y-1.5">
+                    <label id="lbl-editor-approval" className="block font-semibold text-zinc-100">Approval Type</label>
+                    <select
+                      id="select-editor-approval"
+                      value={normalizeApprovalType(editingProp.approvalType, editingProp.reraFlag)}
+                      onChange={(e) => {
+                        const nextApprovalType = e.target.value as Property['approvalType'];
+                        setEditingProp({
+                          ...editingProp,
+                          approvalType: nextApprovalType,
+                          reraFlag: nextApprovalType === 'RERA',
+                          approvalAuthority: nextApprovalType === 'Local Approval' ? (editingProp.approvalAuthority || '') : ''
+                        });
+                      }}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    >
+                      <option value="RERA">RERA</option>
+                      <option value="CREDAI">CREDAI</option>
+                      <option value="Local Approval">Local Approval</option>
+                      <option value="None">None / Pending</option>
+                    </select>
+                    <p className="text-[10px] text-zinc-500 font-mono">
+                      Select the governing approval or membership to show on the website.
+                    </p>
+                  </div>
+
+                  {/* Local authority name */}
+                  {normalizeApprovalType(editingProp.approvalType, editingProp.reraFlag) === 'Local Approval' && (
+                    <div className="min-w-[220px] space-y-1.5">
+                      <label id="lbl-editor-authority" className="block font-semibold text-zinc-100">
+                        Local Authority Name
+                      </label>
+                      <input
+                        id="input-editor-authority"
+                        type="text"
+                        value={editingProp.approvalAuthority || ''}
+                        onChange={(e) => setEditingProp({ ...editingProp, approvalAuthority: e.target.value })}
+                        placeholder="HUDA / AHUDA / NUDA"
+                        className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      />
+                      <p className="text-[10px] text-zinc-500 font-mono">
+                        Enter the local planning authority name if this is not a RERA or CREDAI listing.
+                      </p>
                     </div>
-                  </label>
+                  )}
 
                   {/* Featured */}
                   <label id="lbl-editor-featured" className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -917,7 +978,7 @@ export default function PropertyManager({
                 <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
                   <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans flex items-center gap-1">
                     <ImageIcon className="w-4 h-4 text-emerald-400" />
-                    PHOTO GALLERY CARD ({editingProp.images.length}/8 max)
+                    PHOTO GALLERY CARD ({editingProp.images.length}/8 images, {getTotalMediaCount(editingProp)}/10 total)
                   </h4>
                   <span className="text-[10px] text-zinc-400 font-mono">Upload files only</span>
                 </div>
@@ -1030,7 +1091,7 @@ export default function PropertyManager({
                 <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
                   <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans flex items-center gap-1">
                     <Film className="w-4 h-4 text-emerald-400" />
-                    VIDEO REELS ({editingProp.videos.length}/2 max)
+                    VIDEO REELS ({editingProp.videos.length}/2 videos, {getTotalMediaCount(editingProp)}/10 total)
                   </h4>
                   <span className="text-[10px] text-zinc-400 font-mono">Upload MP4 files</span>
                 </div>
@@ -1135,6 +1196,9 @@ export default function PropertyManager({
 
       {/* 5. INTERACTIVE LIVE SLIDESHOW PREVIEW POPUP MODAL */}
       {slideshowProp && (
+        (() => {
+          const totalMedia = getTotalMediaCount(slideshowProp);
+          return (
         <div id="slideshow-preview-modal" className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl">
             {/* Modal Header */}
@@ -1190,8 +1254,17 @@ export default function PropertyManager({
 
                   {/* Index overlay */}
                   <div className="absolute bottom-3 right-3 bg-black/70 text-white text-[10px] font-mono px-2 py-0.5 rounded-full backdrop-blur">
-                    {activeSlideIndex + 1} / {slideshowProp.images.length}
+                    {activeSlideIndex + 1} / {slideshowProp.images.length} images
                   </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-[10px] text-zinc-400 font-mono">
+                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800">
+                    Total media: {totalMedia}/10
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800">
+                    Max layout: 8 images + 2 videos
+                  </span>
                 </div>
 
                 {/* Slideshow Selector Dots/Thumbnails */}
@@ -1329,6 +1402,8 @@ export default function PropertyManager({
             </div>
           </div>
         </div>
+          );
+        })()
       )}
 
     </div>

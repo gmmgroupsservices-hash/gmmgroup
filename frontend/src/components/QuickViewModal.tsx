@@ -17,6 +17,17 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const approvalType = property.approvalType ?? (property.rera ? "RERA" : "None");
+  const approvalLabel =
+    approvalType === "Local Approval"
+      ? property.approvalAuthority?.trim() || "Local Approval"
+      : approvalType;
+  const approvalCopy =
+    approvalType === "None"
+      ? "Pending"
+      : approvalType === "Local Approval"
+        ? `${approvalLabel} Approval`
+        : `${approvalLabel} Approved`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +103,11 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
             <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">
               <MapPin className="w-4.5 h-4.5 text-teal-400" />
               <span>{property.location} ({property.city}, {property.state})</span>
+            </div>
+
+            <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">
+              <ShieldCheck className="w-4.5 h-4.5 text-teal-400" />
+              <span>{approvalCopy}</span>
             </div>
 
             {/* Long Rich Details */}

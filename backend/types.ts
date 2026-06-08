@@ -15,6 +15,8 @@ export interface PublicProperty {
   videoUrl?: string;
   videoUrls?: string[];
   rera: boolean;
+  approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
+  approvalAuthority?: string;
   featured: boolean;
   description: string;
   highlights: string[];
@@ -61,6 +63,8 @@ export interface AdminProperty {
   description: string;
   featured: boolean;
   reraFlag: boolean;
+  approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
+  approvalAuthority?: string;
   status: "Published" | "Draft";
   images: MediaItem[];
   videos: MediaItem[];

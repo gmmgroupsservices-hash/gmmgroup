@@ -69,6 +69,8 @@ export const toAdminProperty = (property: PublicProperty): AdminProperty => {
     description: property.description,
     featured: property.featured,
     reraFlag: property.rera,
+    approvalType: property.approvalType ?? (property.rera ? "RERA" : "None"),
+    approvalAuthority: property.approvalAuthority,
     status: "Published",
     images: property.imageUrl
       ? [
@@ -289,6 +291,8 @@ export const getPublicProperties = (): PublicProperty[] => {
       videoUrl: videoUrls[0] || existing?.videoUrl,
       videoUrls,
       rera: property.reraFlag,
+      approvalType: property.approvalType ?? (property.reraFlag ? "RERA" : "None"),
+      approvalAuthority: property.approvalAuthority,
       featured: property.featured,
       description: property.description,
       highlights: existing?.highlights ?? [],

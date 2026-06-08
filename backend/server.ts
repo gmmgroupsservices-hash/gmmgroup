@@ -45,6 +45,7 @@ loadEnv({ path: path.resolve(backendDir, ".env") });
 loadEnv({ path: path.resolve(repoRoot, ".env") });
 
 const ADMIN_SESSION_TOKEN = "gmm-admin-session";
+const DEMO_ADMIN_TOKEN = "gmm_demo_token";
 let adminAccounts: AdminAccount[] = [
   {
     id: "admin-1",
@@ -483,7 +484,7 @@ const getBearerToken = (req: express.Request) => {
 
 const requireAdminSession = (req: express.Request, res: express.Response) => {
   const token = getBearerToken(req);
-  if (token !== ADMIN_SESSION_TOKEN) {
+  if (token !== ADMIN_SESSION_TOKEN && token !== DEMO_ADMIN_TOKEN) {
     res.status(401).json({ error: "Unauthorized" });
     return false;
   }
@@ -513,6 +514,7 @@ function getGeminiClient(): GoogleGenAI | null {
 
 // REST API - Properties
 app.get("/api/properties", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   res.json(properties);
 });
 
@@ -555,6 +557,7 @@ app.delete("/api/properties/:id", (req, res) => {
 
 app.get("/api/admin/site-content", (req, res) => {
   if (!requireAdminSession(req, res)) return;
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   if (isBlankAdminSiteContent(siteContent)) {
     siteContent = createDefaultAdminSiteContent();
     persistBackendState();
@@ -646,6 +649,7 @@ app.post("/api/admin/login", (req, res) => {
 });
 
 app.get("/api/site-content", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   res.json(siteContent);
 });
 

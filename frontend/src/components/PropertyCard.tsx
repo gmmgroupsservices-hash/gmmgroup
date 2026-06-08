@@ -35,6 +35,12 @@ export default function PropertyCard({
   ];
   const activeMedia: MediaItem[] = mediaItems.length > 0 ? mediaItems : [{ kind: "image", src: property.imageUrl }];
   const currentMedia = activeMedia[currentMediaIndex % activeMedia.length];
+  const approvalType = property.approvalType ?? (property.rera ? "RERA" : "None");
+  const approvalLabel =
+    approvalType === "Local Approval"
+      ? property.approvalAuthority?.trim() || "Local Approval"
+      : approvalType;
+  const hasApproval = approvalType !== "None";
 
   const handleNextMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,7 +80,7 @@ export default function PropertyCard({
         {/* Floating Gradients & Glass overlays on top of media */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/0 to-transparent opacity-80" />
 
-        {/* RERA and Featured Ribbon Row */}
+        {/* Approval and Featured Ribbon Row */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
           <div className="flex gap-1.5">
             {property.featured && (
@@ -83,10 +89,10 @@ export default function PropertyCard({
               </span>
             )}
 
-            {property.rera && (
+            {hasApproval && (
               <span className="text-[9px] uppercase tracking-wider bg-emerald-500/95 font-bold text-slate-950 px-2 py-1 rounded-md shadow-md flex items-center gap-1 font-outfit">
                 <ShieldCheck className="w-3 h-3 text-slate-950" />
-                <span>RERA Cleared</span>
+                <span>{approvalLabel}</span>
               </span>
             )}
           </div>

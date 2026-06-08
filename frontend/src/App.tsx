@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MessageSquare, ArrowUp, Layers, Heart, X, Sparkles, AlertCircle, Eye, ShieldCheck } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -8,6 +8,8 @@ import QuickViewModal from "./components/QuickViewModal";
 import AIConcierge from "./components/AIConcierge";
 import ServicesAndFeatures from "./components/ServicesAndFeatures";
 import BusinessAddOns from "./components/BusinessAddOns";
+import AddOnPages from "./components/AddOnPages";
+import AddOnDetailPage from "./components/AddOnDetailPage";
 import VideoReels from "./components/VideoReels";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
@@ -26,6 +28,7 @@ import {
   SiteContent
 } from "./types";
 import { FEATURES_GRID, FAQS, INITIAL_PROPERTIES, REELS, SERVICES, TESTIMONIALS } from "./data";
+import { ADD_ON_PAGE_MAP, type AddOnPageId } from "./addOnContent";
 import {
   DEMO_CONTENT_MESSAGE_TYPE,
   DEMO_CONTENT_STORAGE_KEY,
@@ -72,6 +75,8 @@ const DEFAULT_NAVBAR_LABELS: NavbarLabel[] = [
 ];
 
 export default function App() {
+  const normalizePathname = (value: string) => value.replace(/\/+$/, "") || "/";
+  const [pathname, setPathname] = useState(() => normalizePathname(window.location.pathname));
   
   // Core Portfolio & Leads lists sync'd from Express API endpoints
   const [properties, setProperties] = useState<Property[]>([]);
@@ -122,7 +127,26 @@ export default function App() {
   const [showCompareDrawer, setShowCompareDrawer] = useState(false);
   const [showToTopBtn, setShowToTopBtn] = useState(false);
 
-  const applySiteContent = (siteData: DemoSiteContent) => {
+  useEffect(() => {
+    const syncPath = () => setPathname(normalizePathname(window.location.pathname));
+    window.addEventListener("popstate", syncPath);
+    return () => window.removeEventListener("popstate", syncPath);
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/") {
+      document.title = contactDetails.seoTitle || "GMM Groups & Services";
+    } else {
+      const routeId = pathname.slice(1) as AddOnPageId;
+      const routePage = ADD_ON_PAGE_MAP[routeId];
+      if (routePage) {
+        document.title = `${routePage.title} | GMM Groups & Services`;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname, contactDetails.seoTitle]);
+
+  const applySiteContent = useCallback((siteData: DemoSiteContent) => {
     const mappedProperties = mapContentPropertiesToPublic(siteData.properties);
     if (mappedProperties) setProperties(mappedProperties);
     if (Array.isArray(siteData.services)) setServices(siteData.services.filter(isPublished));
@@ -134,63 +158,65 @@ export default function App() {
     if (siteData.contactDetails) setContactDetails(siteData.contactDetails);
     if (siteData.heroContent) setHeroContent(siteData.heroContent);
     if (Array.isArray(siteData.navbarLabels)) setNavbarLabels(siteData.navbarLabels);
-  };
+  }, []);
+
+  const loadLatestContent = useCallback(async (options?: { showLoading?: boolean }) => {
+    try {
+      if (options?.showLoading) {
+        setLoading(true);
+      }
+      setError(null);
+
+      if (isDemoPreview) {
+        const demoContent = readDemoContent();
+        if (demoContent) {
+          applySiteContent(demoContent);
+          return;
+        }
+      }
+
+      const [siteRes, propsRes] = await Promise.all([
+        fetch(`${API_BASE}/api/site-content`, { cache: "no-store" }),
+        fetch(`${API_BASE}/api/properties`, { cache: "no-store" })
+      ]);
+
+      let nextProperties: Property[] | null = null;
+
+      if (siteRes.ok) {
+        const siteData: SiteContent = await siteRes.json();
+        applySiteContent(siteData as DemoSiteContent);
+        nextProperties = mapContentPropertiesToPublic((siteData as DemoSiteContent).properties);
+      }
+
+      if (propsRes.ok) {
+        const propsData = await propsRes.json();
+        nextProperties = Array.isArray(propsData) ? propsData : nextProperties;
+      }
+
+      setProperties(nextProperties ?? INITIAL_PROPERTIES);
+    } catch (err) {
+      console.warn("Backend endpoints unreachable. Falling back securely to static curated GMM catalog.", err);
+      setError("Backend sync unavailable. Showing curated static GMM catalog.");
+      setProperties(INITIAL_PROPERTIES);
+      setServices(SERVICES);
+      setAddons([]);
+      setReels(REELS);
+      setFeatureStats(FEATURES_GRID);
+      setTestimonials(TESTIMONIALS);
+      setFaqs(FAQS);
+      setContactDetails(DEFAULT_CONTACT_DETAILS);
+      setHeroContent(DEFAULT_HERO_CONTENT);
+      setNavbarLabels(DEFAULT_NAVBAR_LABELS);
+    } finally {
+      if (options?.showLoading) {
+        setLoading(false);
+      }
+    }
+  }, [applySiteContent, isDemoPreview]);
 
   // 1. Initial State synchronized fetch
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        if (isDemoPreview) {
-          const demoContent = readDemoContent();
-          if (demoContent) {
-            applySiteContent(demoContent);
-            setLoading(false);
-            return;
-          }
-        }
-
-        const [siteRes, propsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/site-content`),
-          fetch(`${API_BASE}/api/properties`)
-        ]);
-
-        let nextProperties: Property[] | null = null;
-
-        if (siteRes.ok) {
-          const siteData: SiteContent = await siteRes.json();
-          applySiteContent(siteData as DemoSiteContent);
-          nextProperties = mapContentPropertiesToPublic((siteData as DemoSiteContent).properties);
-        }
-
-        if (propsRes.ok) {
-          const propsData = await propsRes.json();
-          nextProperties = Array.isArray(propsData) ? propsData : nextProperties;
-        }
-
-        setProperties(nextProperties ?? INITIAL_PROPERTIES);
-      } catch (err) {
-        console.warn("Backend endpoints unreachable. Falling back securely to static curated GMM catalog.", err);
-        setError("Backend sync unavailable. Showing curated static GMM catalog.");
-        // Secure fallbacks to prevent screen breakage in environments without server-side routing instant starts!
-        setProperties(INITIAL_PROPERTIES);
-        setServices(SERVICES);
-        setAddons([]);
-        setReels(REELS);
-        setFeatureStats(FEATURES_GRID);
-        setTestimonials(TESTIMONIALS);
-        setFaqs(FAQS);
-        setContactDetails(DEFAULT_CONTACT_DETAILS);
-        setHeroContent(DEFAULT_HERO_CONTENT);
-        setNavbarLabels(DEFAULT_NAVBAR_LABELS);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    void loadLatestContent({ showLoading: true });
 
     // Scroll to Top indicators setup
     const handleScrollBtn = () => {
@@ -198,7 +224,23 @@ export default function App() {
     };
     window.addEventListener("scroll", handleScrollBtn);
     return () => window.removeEventListener("scroll", handleScrollBtn);
-  }, [isDemoPreview]);
+  }, [loadLatestContent]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadLatestContent();
+    };
+
+    const intervalId = window.setInterval(refresh, 20000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadLatestContent]);
 
   useEffect(() => {
     if (!isDemoPreview) return;
@@ -329,6 +371,14 @@ export default function App() {
         .map((prop) => prop.location)
     )
   ).sort();
+
+  if (pathname !== "/") {
+    const routeId = pathname.slice(1) as AddOnPageId;
+    const routePage = ADD_ON_PAGE_MAP[routeId];
+    if (routePage) {
+      return <AddOnDetailPage pageId={routeId} />;
+    }
+  }
 
   return (
     <div className="bg-gray-950 font-sans text-gray-200 min-h-screen relative selection:bg-teal-500 selection:text-slate-950">
@@ -472,6 +522,9 @@ export default function App() {
 
       {/* Business add-ons pages section */}
       <BusinessAddOns addOns={addons} />
+
+      {/* Dedicated add-on service pages */}
+      <AddOnPages addOns={addons} />
 
       {/* Video Reels Walkthroughs */}
       <VideoReels reels={reels} />
@@ -617,7 +670,19 @@ export default function App() {
                           <li className="flex justify-between"><span>Micro Corridor:</span> <span className="text-white truncate max-w-[120px]">{prop.location}</span></li>
                           <li className="flex justify-between"><span>Sq.Ft Area:</span> <span className="text-white">{prop.sqft}</span></li>
                           <li className="flex justify-between"><span>BHK Beds:</span> <span className="text-white">{prop.beds || "Plot"}</span></li>
-                          <li className="flex justify-between"><span>RERA Safe Stamp:</span> <span className="text-emerald-400 flex items-center gap-0.5">{prop.rera ? <ShieldCheck className="w-3.5 h-3.5" /> : "Pending"}{prop.rera ? "Yes" : "No"}</span></li>
+                          <li className="flex justify-between">
+                            <span>Approval Status:</span>
+                            <span className="text-emerald-400 flex items-center gap-0.5">
+                              {(prop.approvalType ?? (prop.rera ? "RERA" : "None")) !== "None" ? (
+                                <>
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  {prop.approvalType === "Local Approval" ? (prop.approvalAuthority || "Local Approval") : (prop.approvalType ?? "RERA")}
+                                </>
+                              ) : (
+                                "Pending"
+                              )}
+                            </span>
+                          </li>
                         </ul>
 
                         <button

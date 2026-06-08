@@ -15,6 +15,7 @@ const cwd = process.cwd();
 const runningFromBackendFolder = path.basename(cwd) === "backend";
 const backendDir = runningFromBackendFolder ? cwd : path.resolve(cwd, "backend");
 const repoRoot = runningFromBackendFolder ? path.resolve(cwd, "..") : cwd;
+const DEMO_ADMIN_TOKEN = "gmm_demo_token";
 
 loadEnv({ path: path.resolve(backendDir, ".env") });
 loadEnv({ path: path.resolve(repoRoot, ".env") });
@@ -80,6 +81,8 @@ export const toCleanPublicProperties = (): PublicProperty[] => {
       videoUrl: videoUrls[0],
       videoUrls,
       rera: Boolean(property.reraFlag),
+      approvalType: property.approvalType ?? (property.reraFlag ? "RERA" : "None"),
+      approvalAuthority: property.approvalAuthority,
       featured: Boolean(property.featured),
       description: property.description || "",
       highlights: [],
@@ -192,7 +195,7 @@ export const requireAdminSession = (req: any, res: any) => {
   const match = /^Bearer\s+(.+)$/i.exec(header);
   const token = match?.[1] || "";
 
-  if (token !== ADMIN_SESSION_TOKEN) {
+  if (token !== ADMIN_SESSION_TOKEN && token !== DEMO_ADMIN_TOKEN) {
     res.status(401).json({ error: "Unauthorized" });
     return false;
   }
