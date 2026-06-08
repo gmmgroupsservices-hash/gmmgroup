@@ -18,6 +18,7 @@ import {
   DEMO_CONTENT_MESSAGE_TYPE,
   DEMO_PREVIEW_READY_MESSAGE_TYPE,
   type DemoSiteContent,
+  createDemoContent,
   readDemoContent,
   writeDemoContent
 } from './demoStorage';
@@ -103,6 +104,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(ADMIN_STORAGE_KEY, adminToken);
   }, [adminToken]);
+
+  useEffect(() => {
+    setCurrentView('mirror');
+  }, []);
 
   // Live content state loaded from and saved to backend
   const [properties, setProperties] = useState<Property[]>(EMPTY_PROPERTIES);
@@ -196,9 +201,12 @@ export default function App() {
     const loadFallbackContent = async () => {
       const response = await fetch(`${API_BASE}/api/properties`);
       const propsData = response.ok ? await response.json() : [];
+      const demoContent = createDemoContent();
 
       return {
-        properties: Array.isArray(propsData) ? propsData.map(normalizeProperty) : EMPTY_PROPERTIES,
+        properties: Array.isArray(propsData) && propsData.length > 0
+          ? propsData.map(normalizeProperty)
+          : demoContent.properties,
         services: EMPTY_SERVICES,
         addons: EMPTY_ADDONS,
         reels: EMPTY_REELS,
@@ -237,12 +245,44 @@ export default function App() {
         }
 
         let content = await response.json();
-        if (isBlankContent(content) && adminToken === DEMO_ADMIN_TOKEN) {
-          const demoContent = readDemoContent();
-          if (demoContent) {
-            content = demoContent;
-          }
+        const demoContent = readDemoContent();
+        const seededContent = createDemoContent();
+        if (isBlankContent(content)) {
+          content = demoContent ?? seededContent;
         }
+        content = {
+          ...content,
+          properties: Array.isArray(content.properties) && content.properties.length > 0
+            ? content.properties
+            : seededContent.properties,
+          services: Array.isArray(content.services) && content.services.length > 0
+            ? content.services
+            : seededContent.services,
+          addons: Array.isArray(content.addons) && content.addons.length > 0
+            ? content.addons
+            : seededContent.addons,
+          reels: Array.isArray(content.reels) && content.reels.length > 0
+            ? content.reels
+            : seededContent.reels,
+          featureStats: Array.isArray(content.featureStats) && content.featureStats.length > 0
+            ? content.featureStats
+            : seededContent.featureStats,
+          testimonials: Array.isArray(content.testimonials) && content.testimonials.length > 0
+            ? content.testimonials
+            : seededContent.testimonials,
+          faqs: Array.isArray(content.faqs) && content.faqs.length > 0
+            ? content.faqs
+            : seededContent.faqs,
+          contactDetails: content.contactDetails ?? seededContent.contactDetails,
+          heroContent: content.heroContent ?? seededContent.heroContent,
+          aiAdvisorConfig: content.aiAdvisorConfig ?? seededContent.aiAdvisorConfig,
+          navbarLabels: Array.isArray(content.navbarLabels) && content.navbarLabels.length > 0
+            ? content.navbarLabels
+            : seededContent.navbarLabels,
+          activities: Array.isArray(content.activities) && content.activities.length > 0
+            ? content.activities
+            : seededContent.activities
+        };
         if (isBlankContent(content)) {
           content = await loadFallbackContent();
         }
