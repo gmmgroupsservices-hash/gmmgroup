@@ -350,19 +350,20 @@ const createDefaultAdminSiteContent = (): AdminSiteContent => ({
 
 const mergeAdminSiteContent = (stored: Partial<AdminSiteContent> | null | undefined): AdminSiteContent => {
   const defaults = createDefaultAdminSiteContent();
+  const hasItems = <T,>(value: T[] | undefined | null) => Array.isArray(value) && value.length > 0;
 
   return {
     ...defaults,
     ...stored,
-    properties: Array.isArray(stored?.properties) ? stored.properties : defaults.properties,
-    services: Array.isArray(stored?.services) ? stored.services : defaults.services,
-    addons: Array.isArray(stored?.addons) ? stored.addons : defaults.addons,
-    reels: Array.isArray(stored?.reels) ? stored.reels : defaults.reels,
-    featureStats: Array.isArray(stored?.featureStats) ? stored.featureStats : defaults.featureStats,
-    testimonials: Array.isArray(stored?.testimonials) ? stored.testimonials : defaults.testimonials,
-    faqs: Array.isArray(stored?.faqs) ? stored.faqs : defaults.faqs,
-    navbarLabels: Array.isArray(stored?.navbarLabels) ? stored.navbarLabels : defaults.navbarLabels,
-    activities: Array.isArray(stored?.activities) ? stored.activities : defaults.activities,
+    properties: hasItems(stored?.properties) ? stored.properties : defaults.properties,
+    services: hasItems(stored?.services) ? stored.services : defaults.services,
+    addons: hasItems(stored?.addons) ? stored.addons : defaults.addons,
+    reels: hasItems(stored?.reels) ? stored.reels : defaults.reels,
+    featureStats: hasItems(stored?.featureStats) ? stored.featureStats : defaults.featureStats,
+    testimonials: hasItems(stored?.testimonials) ? stored.testimonials : defaults.testimonials,
+    faqs: hasItems(stored?.faqs) ? stored.faqs : defaults.faqs,
+    navbarLabels: hasItems(stored?.navbarLabels) ? stored.navbarLabels : defaults.navbarLabels,
+    activities: hasItems(stored?.activities) ? stored.activities : defaults.activities,
     contactDetails: stored?.contactDetails ?? defaults.contactDetails,
     heroContent: stored?.heroContent ?? defaults.heroContent,
     aiAdvisorConfig: stored?.aiAdvisorConfig ?? defaults.aiAdvisorConfig

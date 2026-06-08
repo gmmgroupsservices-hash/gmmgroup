@@ -238,18 +238,20 @@ let siteContent = createDefaultSiteContent();
 export const getSiteContent = () => siteContent;
 
 export const setSiteContent = (content: Partial<SiteContent>) => {
+  const hasItems = <T,>(value: T[] | undefined | null) => Array.isArray(value) && value.length > 0;
+
   siteContent = {
     ...siteContent,
     ...content,
-    properties: Array.isArray(content.properties) ? content.properties : siteContent.properties,
-    services: Array.isArray(content.services) ? content.services : siteContent.services,
-    addons: Array.isArray(content.addons) ? content.addons : siteContent.addons,
-    reels: Array.isArray(content.reels) ? content.reels : siteContent.reels,
-    featureStats: Array.isArray(content.featureStats) ? content.featureStats : siteContent.featureStats,
-    testimonials: Array.isArray(content.testimonials) ? content.testimonials : siteContent.testimonials,
-    faqs: Array.isArray(content.faqs) ? content.faqs : siteContent.faqs,
-    navbarLabels: Array.isArray(content.navbarLabels) ? content.navbarLabels : siteContent.navbarLabels,
-    activities: Array.isArray(content.activities) ? content.activities : siteContent.activities,
+    properties: hasItems(content.properties) ? content.properties : siteContent.properties,
+    services: hasItems(content.services) ? content.services : siteContent.services,
+    addons: hasItems(content.addons) ? content.addons : siteContent.addons,
+    reels: hasItems(content.reels) ? content.reels : siteContent.reels,
+    featureStats: hasItems(content.featureStats) ? content.featureStats : siteContent.featureStats,
+    testimonials: hasItems(content.testimonials) ? content.testimonials : siteContent.testimonials,
+    faqs: hasItems(content.faqs) ? content.faqs : siteContent.faqs,
+    navbarLabels: hasItems(content.navbarLabels) ? content.navbarLabels : siteContent.navbarLabels,
+    activities: hasItems(content.activities) ? content.activities : siteContent.activities,
     contactDetails: content.contactDetails ?? siteContent.contactDetails,
     heroContent: content.heroContent ?? siteContent.heroContent,
     aiAdvisorConfig: content.aiAdvisorConfig ?? siteContent.aiAdvisorConfig
