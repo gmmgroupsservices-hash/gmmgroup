@@ -1,9 +1,9 @@
 import path from "path";
 import {
   allowCors,
-  cloudinary,
   cloudinaryConfigured,
   ensureStateLoaded,
+  getCloudinaryClient,
   requireAdminSession
 } from "../_helpers.ts";
 
@@ -26,6 +26,12 @@ export default async function handler(req: any, res: any) {
     }
 
     if (!cloudinaryConfigured) {
+      res.status(500).json({ error: "Cloudinary is not configured on the backend" });
+      return;
+    }
+
+    const cloudinary = await getCloudinaryClient();
+    if (!cloudinary) {
       res.status(500).json({ error: "Cloudinary is not configured on the backend" });
       return;
     }

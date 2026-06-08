@@ -1,5 +1,4 @@
 import path from "path";
-import { v2 as cloudinary } from "cloudinary";
 import { config as loadEnv } from "dotenv";
 import type { AdminAccount, PublicProperty } from "../types.ts";
 import {
@@ -25,18 +24,28 @@ export const cloudinaryConfigured = Boolean(
   (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
 );
 
-if (cloudinaryConfigured) {
-  if (process.env.CLOUDINARY_URL) {
-    cloudinary.config({ secure: true });
-  } else {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-      secure: true
+let cloudinaryClientPromise: Promise<typeof import("cloudinary").v2> | null = null;
+
+export const getCloudinaryClient = async () => {
+  if (!cloudinaryConfigured) return null;
+  if (!cloudinaryClientPromise) {
+    cloudinaryClientPromise = import("cloudinary").then(({ v2 }) => {
+      if (process.env.CLOUDINARY_URL) {
+        v2.config({ secure: true });
+      } else {
+        v2.config({
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          api_secret: process.env.CLOUDINARY_API_SECRET,
+          secure: true
+        });
+      }
+      return v2;
     });
   }
-}
+
+  return cloudinaryClientPromise;
+};
 
 const statePublicId = (process.env.CLOUDINARY_STATE_PUBLIC_ID || "gmm/site-content-state").replace(/\.json$/i, "");
 
@@ -93,6 +102,10 @@ export const toCleanPublicProperties = (): PublicProperty[] => {
 };
 
 const fetchCloudinaryState = async () => {
+  const cloudinary = await getCloudinaryClient();
+  if (!cloudinary) {
+    throw new Error("Cloudinary is not configured");
+  }
   const resource = await cloudinary.api.resource(statePublicId, {
     resource_type: "raw",
     type: "upload"
@@ -144,6 +157,8 @@ export const ensureStateLoaded = async () => {
 
 export const persistState = async () => {
   if (!cloudinaryConfigured) return;
+  const cloudinary = await getCloudinaryClient();
+  if (!cloudinary) return;
 
   const payload = JSON.stringify(
     {
@@ -231,4 +246,4 @@ export const getChatSuggestions = (query: string) => {
     .slice(0, 2);
 };
 
-export { ADMIN_SESSION_TOKEN, cloudinary, getAdminAccounts, getPublicProperties, getSiteContent };
+export { ADMIN_SESSION_TOKEN, getAdminAccounts, getPublicProperties, getSiteContent };
