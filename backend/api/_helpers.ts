@@ -1,6 +1,6 @@
 import path from "path";
 import { config as loadEnv } from "dotenv";
-import type { AdminAccount, PublicProperty } from "../types.ts";
+import type { AdminAccount, PublicProperty } from "../types";
 import {
   ADMIN_SESSION_TOKEN,
   getAdminAccounts,
@@ -8,7 +8,7 @@ import {
   getSiteContent,
   setAdminAccounts,
   setSiteContent
-} from "../state.ts";
+} from "../state";
 
 const cwd = process.cwd();
 const runningFromBackendFolder = path.basename(cwd) === "backend";

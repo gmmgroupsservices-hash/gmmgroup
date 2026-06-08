@@ -1,4 +1,4 @@
-import { getSiteContent } from "../state.ts";
+import { getSiteContent } from "../state";
 
 const allowCors = (req: any, res: any) => {
   const origin = req.headers?.origin;

@@ -1,4 +1,4 @@
-import type { PublicProperty } from "./types.ts";
+import type { PublicProperty } from "./types";
 
 export const INITIAL_PROPERTIES: PublicProperty[] = [
   {

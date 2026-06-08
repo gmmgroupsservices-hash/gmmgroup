@@ -1,4 +1,4 @@
-import { allowCors, ensureStateLoaded, getChatSuggestions } from "./_helpers.ts";
+import { allowCors, ensureStateLoaded, getChatSuggestions } from "./_helpers";
 
 export default async function handler(req: any, res: any) {
   if (allowCors(req, res)) return;

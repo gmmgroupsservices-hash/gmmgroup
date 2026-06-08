@@ -5,7 +5,7 @@ import {
   FEATURES_GRID as PUBLIC_FEATURES_GRID,
   TESTIMONIALS as PUBLIC_TESTIMONIALS,
   FAQS as PUBLIC_FAQS
-} from "./data.ts";
+} from "./data";
 import type {
   AddOnItem,
   AdminAccount,
@@ -22,7 +22,7 @@ import type {
   ShowcaseReel,
   SiteContent,
   TestimonialItem
-} from "./types.ts";
+} from "./types";
 
 export const ADMIN_SESSION_TOKEN = "gmm-admin-session";
 

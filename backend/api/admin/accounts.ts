@@ -1,11 +1,11 @@
-import type { AdminAccount } from "../../types.ts";
+import type { AdminAccount } from "../../types";
 import {
   allowCors,
   ensureStateLoaded,
   getVisibleAccounts,
   requireAdminSession,
   saveAdminAccounts
-} from "../_helpers.ts";
+} from "../_helpers";
 
 export default async function handler(req: any, res: any) {
   if (allowCors(req, res)) return;

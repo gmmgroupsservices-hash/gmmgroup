@@ -4,7 +4,7 @@ import {
   getSiteContent,
   requireAdminSession,
   saveSiteContent
-} from "../_helpers.ts";
+} from "../_helpers";
 
 export default async function handler(req: any, res: any) {
   if (allowCors(req, res)) return;

@@ -1,4 +1,4 @@
-import { getPublicProperties } from "../state.ts";
+import { getPublicProperties } from "../state";
 
 const allowCors = (req: any, res: any) => {
   const origin = req.headers?.origin;
