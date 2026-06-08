@@ -1,12 +1,35 @@
-import { allowCors, ensureStateLoaded, getSiteContent } from "./_helpers.ts";
+import { getSiteContent } from "../state.ts";
+
+const allowCors = (req: any, res: any) => {
+  const origin = req.headers?.origin;
+  const allowedOriginPatterns = [
+    /^https?:\/\/localhost(?::\d+)?$/i,
+    /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
+    /^https:\/\/.*\.vercel\.app$/i
+  ];
+
+  if (typeof origin === "string" && allowedOriginPatterns.some((pattern) => pattern.test(origin))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return true;
+  }
+
+  return false;
+};
 
 export default async function handler(req: any, res: any) {
   if (allowCors(req, res)) return;
   try {
-    await ensureStateLoaded();
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     res.status(200).json(getSiteContent());
   } catch (error) {
-    console.error("[api/site-content] Falling back after load failure:", error);
-    res.status(200).json(getSiteContent());
+    console.error("[api/site-content] Failed to build site content:", error);
+    res.status(200).json({});
   }
 }
