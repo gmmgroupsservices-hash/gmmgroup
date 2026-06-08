@@ -1,5 +1,3 @@
-import { createDefaultPublicSiteContent } from "../publicDefaults";
-
 const allowCors = (req: any, res: any) => {
   const origin = req.headers?.origin;
   const allowedOriginPatterns = [
@@ -23,6 +21,8 @@ const allowCors = (req: any, res: any) => {
   return false;
 };
 
+const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error("Timed out")), ms));
+
 const getCloudinaryConfig = () => {
   const cloudName =
     (typeof process.env.CLOUDINARY_CLOUD_NAME === "string" && process.env.CLOUDINARY_CLOUD_NAME.trim()) ||
@@ -42,27 +42,27 @@ const getCloudinaryConfig = () => {
 const buildAuthHeader = (apiKey: string, apiSecret: string) =>
   `Basic ${Buffer.from(`${apiKey}:${apiSecret}`, "utf-8").toString("base64")}`;
 
-const fetchPersistedPublicProperties = async () => {
+const fetchPersistedProperties = async () => {
   const { cloudName, apiKey, apiSecret, statePublicId } = getCloudinaryConfig();
   if (!cloudName || !apiKey || !apiSecret) return null;
 
-  const resourceResponse = await fetch(
-    `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/raw/upload/${encodeURIComponent(statePublicId)}.json`,
-    {
-      headers: {
-        Authorization: buildAuthHeader(apiKey, apiSecret)
-      },
-      cache: "no-store"
-    }
-  );
+  const resourceResponse = await Promise.race([
+    fetch(
+      `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/raw/upload/${encodeURIComponent(statePublicId)}.json`,
+      {
+        headers: { Authorization: buildAuthHeader(apiKey, apiSecret) },
+        cache: "no-store"
+      }
+    ),
+    timeout(4000)
+  ]) as Response;
 
   if (!resourceResponse.ok) return null;
-
   const resource = await resourceResponse.json().catch(() => null);
   const secureUrl = resource?.secure_url;
   if (typeof secureUrl !== "string" || !secureUrl) return null;
 
-  const stateResponse = await fetch(secureUrl, { cache: "no-store" });
+  const stateResponse = await Promise.race([fetch(secureUrl, { cache: "no-store" }), timeout(4000)]) as Response;
   if (!stateResponse.ok) return null;
 
   const persisted = await stateResponse.json().catch(() => null);
@@ -73,11 +73,11 @@ export default async function handler(req: any, res: any) {
   if (allowCors(req, res)) return;
 
   try {
+    const properties = await fetchPersistedProperties();
     res.setHeader("Cache-Control", "no-store, max-age=0");
-    const persisted = await fetchPersistedPublicProperties();
-    res.status(200).json(persisted ?? createDefaultPublicSiteContent().properties);
+    res.status(200).json(properties ?? []);
   } catch (error) {
     console.error("[api/properties] Failed to build public properties:", error);
-    res.status(200).json(createDefaultPublicSiteContent().properties);
+    res.status(200).json([]);
   }
 }
