@@ -307,6 +307,20 @@ export default function App() {
         setHasLoadedContent(true);
       } catch (error) {
         console.error('Failed to load admin content from backend:', error);
+        const fallbackContent = createDemoContent();
+        setProperties(fallbackContent.properties);
+        setServices(fallbackContent.services);
+        setAddons(fallbackContent.addons);
+        setReels(fallbackContent.reels);
+        setFeatureStats(fallbackContent.featureStats);
+        setTestimonials(fallbackContent.testimonials);
+        setFaqs(fallbackContent.faqs);
+        setContactDetails(fallbackContent.contactDetails);
+        setHeroContent(fallbackContent.heroContent);
+        setAiAdvisorConfig(fallbackContent.aiAdvisorConfig);
+        setNavbarLabels(fallbackContent.navbarLabels);
+        setActivities(fallbackContent.activities);
+        setHasLoadedContent(true);
       } finally {
         if (!isCancelled) setIsInitialized(true);
         if (!isCancelled) setIsAuthChecking(false);
