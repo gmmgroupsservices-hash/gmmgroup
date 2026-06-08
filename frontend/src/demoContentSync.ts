@@ -1,4 +1,4 @@
-import { INITIAL_PROPERTIES } from "./data";
+import { FEATURES_GRID, FAQS, INITIAL_PROPERTIES, REELS, SERVICES, TESTIMONIALS } from "./data";
 import type {
   AddOnItem,
   ContactDetails,
@@ -67,6 +67,31 @@ export interface DemoSiteContent {
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80";
+
+const isBlankContent = (content: Partial<DemoSiteContent> | null | undefined) =>
+  !content ||
+  (!Array.isArray(content.properties) || content.properties.length === 0) &&
+  (!Array.isArray(content.services) || content.services.length === 0) &&
+  (!Array.isArray(content.addons) || content.addons.length === 0) &&
+  (!Array.isArray(content.reels) || content.reels.length === 0) &&
+  (!Array.isArray(content.featureStats) || content.featureStats.length === 0) &&
+  (!Array.isArray(content.testimonials) || content.testimonials.length === 0) &&
+  (!Array.isArray(content.faqs) || content.faqs.length === 0);
+
+export const createDemoContent = (): DemoSiteContent => ({
+  properties: INITIAL_PROPERTIES,
+  services: SERVICES,
+  addons: [],
+  reels: REELS,
+  featureStats: FEATURES_GRID,
+  testimonials: TESTIMONIALS,
+  faqs: FAQS,
+  contactDetails: undefined,
+  heroContent: undefined,
+  navbarLabels: undefined,
+  aiAdvisorConfig: undefined,
+  activities: undefined
+});
 
 const isAdminProperty = (property: Property | AdminProperty): property is AdminProperty => {
   return "squareFeet" in property || "reraFlag" in property;
@@ -149,14 +174,17 @@ export const mapContentPropertiesToPublic = (properties: Array<Property | AdminP
 export const readDemoContent = (): DemoSiteContent | null => {
   try {
     const raw = window.localStorage.getItem(DEMO_CONTENT_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as DemoSiteContent) : null;
+    if (!raw) return createDemoContent();
+    const parsed = JSON.parse(raw) as DemoSiteContent;
+    return isBlankContent(parsed) ? createDemoContent() : parsed;
   } catch {
-    return null;
+    return createDemoContent();
   }
 };
 
 export const writeDemoContent = (content: DemoSiteContent) => {
-  window.localStorage.setItem(DEMO_CONTENT_STORAGE_KEY, JSON.stringify(content));
+  const normalized = isBlankContent(content) ? createDemoContent() : content;
+  window.localStorage.setItem(DEMO_CONTENT_STORAGE_KEY, JSON.stringify(normalized));
 };
 
 export const isPublished = <T extends { status?: string }>(item: T) => item.status !== "Draft";

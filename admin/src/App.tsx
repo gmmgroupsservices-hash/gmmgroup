@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import LiveSiteMirror from './components/LiveSiteMirror';
 import DashboardOverview from './components/DashboardOverview';
 import PropertyManager from './components/PropertyManager';
 import ContentSectionsManager from './components/ContentSectionsManager';
@@ -79,16 +80,20 @@ const FRONTEND_PREVIEW_URL = (
   (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gmmgroup.vercel.app')
 ).replace(/\/$/, '');
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
+const getStoredAdminToken = () => {
+  const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+  return stored && stored.trim() ? stored : DEMO_ADMIN_TOKEN;
+};
 
 export default function App() {
   // Navigation tabs
-  const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [currentView, setCurrentView] = useState<string>('mirror');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem(ADMIN_STORAGE_KEY) ?? DEMO_ADMIN_TOKEN);
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => (localStorage.getItem(ADMIN_STORAGE_KEY) ?? DEMO_ADMIN_TOKEN) === DEMO_ADMIN_TOKEN);
+  const [adminToken, setAdminToken] = useState<string>(getStoredAdminToken);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => getStoredAdminToken() === DEMO_ADMIN_TOKEN);
   const [loginUsername, setLoginUsername] = useState('gmmadmin');
   const [loginPassword, setLoginPassword] = useState('gmmadmin123');
   const [loginError, setLoginError] = useState('');
@@ -490,6 +495,27 @@ export default function App() {
         <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto space-y-8 pb-16">
           
           {/* View Dispatcher Switch */}
+          {currentView === 'mirror' && (
+            <LiveSiteMirror
+              content={buildCurrentContent()}
+              frontendUrl={FRONTEND_PREVIEW_URL}
+              isDemoMode={isDemoMode}
+              onNavigate={setCurrentView}
+              onRefreshPreview={handlePreviewFrontend}
+              properties={properties}
+              services={services}
+              addons={addons}
+              reels={reels}
+              featureStats={featureStats}
+              testimonials={testimonials}
+              faqs={faqs}
+              contactDetails={contactDetails}
+              heroContent={heroContent}
+              navbarLabels={navbarLabels}
+              activities={activities}
+            />
+          )}
+
           {currentView === 'dashboard' && (
             <DashboardOverview
               properties={properties}

@@ -49,6 +49,21 @@ export interface DemoSiteContent {
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
+const isBlankContent = (content: Partial<DemoSiteContent> | null | undefined) =>
+  !content ||
+  (!Array.isArray(content.properties) || content.properties.length === 0) &&
+  (!Array.isArray(content.services) || content.services.length === 0) &&
+  (!Array.isArray(content.addons) || content.addons.length === 0) &&
+  (!Array.isArray(content.reels) || content.reels.length === 0) &&
+  (!Array.isArray(content.featureStats) || content.featureStats.length === 0) &&
+  (!Array.isArray(content.testimonials) || content.testimonials.length === 0) &&
+  (!Array.isArray(content.faqs) || content.faqs.length === 0) &&
+  !content.contactDetails &&
+  !content.heroContent &&
+  !content.aiAdvisorConfig &&
+  !content.navbarLabels &&
+  !content.activities;
+
 export const createDemoContent = (): DemoSiteContent => ({
   properties: clone(DEMO_PROPERTIES),
   services: clone(DEMO_SERVICES),
@@ -66,6 +81,7 @@ export const createDemoContent = (): DemoSiteContent => ({
 
 const normalizeContent = (content: Partial<DemoSiteContent> | null | undefined): DemoSiteContent => {
   const defaults = createDemoContent();
+  if (isBlankContent(content)) return defaults;
   return {
     properties: Array.isArray(content?.properties) ? content.properties : defaults.properties,
     services: Array.isArray(content?.services) ? content.services : defaults.services,

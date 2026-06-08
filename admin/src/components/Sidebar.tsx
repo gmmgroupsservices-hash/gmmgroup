@@ -30,6 +30,7 @@ interface SidebarProps {
 
 export default function Sidebar({ currentView, setCurrentView, isOpen, setIsOpen }: SidebarProps) {
   const menuItems = [
+    { id: 'mirror', label: 'Live Mirror', icon: Sparkles },
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'properties', label: 'Property Listings', icon: Building2 },
     { id: 'services', label: 'Business Services', icon: Briefcase },
