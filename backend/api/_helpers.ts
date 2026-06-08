@@ -48,15 +48,6 @@ export const getCloudinaryClient = async () => {
 };
 
 const statePublicId = (process.env.CLOUDINARY_STATE_PUBLIC_ID || "gmm/site-content-state").replace(/\.json$/i, "");
-const getCloudinaryCloudName = () => {
-  if (typeof process.env.CLOUDINARY_CLOUD_NAME === "string" && process.env.CLOUDINARY_CLOUD_NAME.trim()) {
-    return process.env.CLOUDINARY_CLOUD_NAME.trim();
-  }
-
-  const url = process.env.CLOUDINARY_URL || "";
-  const match = /^cloudinary:\/\/[^@]+@([^/?#]+)$/i.exec(url);
-  return match?.[1] || "";
-};
 
 let stateReady = false;
 let stateLoadPromise: Promise<void> | null = null;
@@ -111,15 +102,16 @@ export const toCleanPublicProperties = (): PublicProperty[] => {
 };
 
 const fetchCloudinaryState = async () => {
-  const cloudName = getCloudinaryCloudName();
-  if (!cloudName) {
+  const cloudinary = await getCloudinaryClient();
+  if (!cloudinary) {
     throw new Error("Cloudinary is not configured");
   }
 
-  const response = await fetch(
-    `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/raw/upload/${statePublicId}.json`,
-    { cache: "no-store" }
-  );
+  const resource = await cloudinary.api.resource(`${statePublicId}.json`, {
+    resource_type: "raw"
+  } as any);
+
+  const response = await fetch(resource.secure_url, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`Cloudinary state fetch failed with ${response.status}`);
   }
