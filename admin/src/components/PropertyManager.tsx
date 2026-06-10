@@ -846,22 +846,23 @@ export default function PropertyManager({
                   {/* District */}
                   <div className="space-y-1.5">
                     <label id="lbl-prop-city" className="text-xs font-medium text-zinc-400 block">District</label>
-                    <input
+                    <select
                       id="input-prop-city"
-                      list="district-suggestions"
-                      placeholder={editingProp.state ? "Search district" : "Select state first"}
                       value={editingProp.city}
                       onChange={(e) => setEditingProp({ ...editingProp, city: e.target.value, location: '' })}
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    />
-                    <datalist id="district-suggestions">
+                      disabled={!editingProp.state}
+                    >
+                      <option value="">{editingProp.state ? "Select District" : "Select state first"}</option>
                       {districtOptions.map((district) => (
-                        <option key={district} value={district} />
+                        <option key={district} value={district}>
+                          {district}
+                        </option>
                       ))}
                       {editingProp.city && !districtOptions.includes(editingProp.city) && (
-                        <option value={editingProp.city} />
+                        <option value={editingProp.city}>{editingProp.city}</option>
                       )}
-                    </datalist>
+                    </select>
                   </div>
 
                   {/* State */}

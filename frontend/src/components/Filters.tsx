@@ -185,22 +185,22 @@ export default function Filters({
                   <MapPin className="w-3 h-3 text-sky-400" />
                   <span>District</span>
                 </label>
-                <input
+                <select
                   value={selectedCity}
                   onChange={(e) => {
                     setSelectedCity(e.target.value);
                     setSelectedLocation("");
                   }}
-                  list="district-suggestions"
-                  placeholder={selectedState ? "Search district" : "Select a state first"}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
                   disabled={!selectedState}
-                />
-                <datalist id="district-suggestions">
+                >
+                  <option value="">{selectedState ? "All Districts" : "Select state first"}</option>
                   {getDistrictOptionsForState(selectedState).map((district) => (
-                    <option key={district} value={district} />
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </div>
 
               {/* Filter 3: Exact Locality Selector */}
