@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, MapPin, DollarSign, Home, Users, Percent, HelpCircle } from "lucide-react";
-import { INDIA_STATE_OPTIONS, getDistrictOptionsForState } from "../locationData";
+import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getLocalityOptionsForDistrict } from "../locationData";
 
 interface FiltersProps {
   activeTab: string;
@@ -100,6 +100,10 @@ export default function Filters({
       setTimeout(() => setSellSubmitted(false), 8000);
     }
   };
+
+  const localitySuggestions = Array.from(
+    new Set([...getLocalityOptionsForDistrict(selectedState, selectedCity), ...locationOptions])
+  ).sort();
 
   return (
     <div className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
@@ -213,7 +217,7 @@ export default function Filters({
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
                 />
                 <datalist id="locality-suggestions">
-                  {locationOptions.map((location) => (
+                  {localitySuggestions.map((location) => (
                     <option key={location} value={location} />
                   ))}
                 </datalist>

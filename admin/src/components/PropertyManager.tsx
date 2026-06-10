@@ -31,7 +31,7 @@ import {
   Heart
 } from 'lucide-react';
 import { Property, MediaItem, PropertyType, PropertyCategory } from '../types';
-import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getStateName } from '../locationData';
+import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getLocalityOptionsForDistrict, getStateName } from '../locationData';
 import { getPropertyMetrics } from '../propertyMetrics';
 
 interface PropertyManagerProps {
@@ -129,7 +129,9 @@ export default function PropertyManager({
   const districtOptions = editingProp ? getDistrictOptionsForState(editingProp.state) : [];
   const localityOptions = Array.from(
     new Set(
-      properties
+      [
+        ...getLocalityOptionsForDistrict(editingProp?.state ?? '', editingProp?.city ?? ''),
+        ...properties
         .filter((property) => {
           if (!editingProp) return true;
           const stateMatches = !editingProp.state || getStateName(property.state) === getStateName(editingProp.state);
@@ -138,6 +140,7 @@ export default function PropertyManager({
         })
         .map((property) => property.location)
         .filter(Boolean)
+      ]
     )
   ).sort();
 
