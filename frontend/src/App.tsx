@@ -192,7 +192,7 @@ export default function App() {
 
       if (propsRes.ok) {
         const propsData = await propsRes.json();
-        nextProperties = Array.isArray(propsData) ? propsData : nextProperties;
+        nextProperties = Array.isArray(propsData) ? (mapContentPropertiesToPublic(propsData) ?? nextProperties) : nextProperties;
       }
 
       setProperties(nextProperties ?? INITIAL_PROPERTIES);
