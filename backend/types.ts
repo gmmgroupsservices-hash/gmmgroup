@@ -17,6 +17,8 @@ export interface PublicProperty {
   rera: boolean;
   approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
   approvalAuthority?: string;
+  viewCount?: number;
+  likeCount?: number;
   featured: boolean;
   description: string;
   highlights: string[];
@@ -65,6 +67,8 @@ export interface AdminProperty {
   reraFlag: boolean;
   approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
   approvalAuthority?: string;
+  viewCount?: number;
+  likeCount?: number;
   status: "Published" | "Draft";
   images: MediaItem[];
   videos: MediaItem[];

@@ -92,6 +92,8 @@ export const toCleanPublicProperties = (): PublicProperty[] => {
       rera: Boolean(property.reraFlag),
       approvalType: property.approvalType ?? (property.reraFlag ? "RERA" : "None"),
       approvalAuthority: property.approvalAuthority,
+      viewCount: property.viewCount,
+      likeCount: property.likeCount,
       featured: Boolean(property.featured),
       description: property.description || "",
       highlights: [],

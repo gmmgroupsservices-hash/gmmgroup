@@ -17,6 +17,8 @@ export interface Property {
   rera: boolean;
   approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
   approvalAuthority?: string;
+  viewCount?: number;
+  likeCount?: number;
   featured: boolean;
   description: string;
   highlights: string[];

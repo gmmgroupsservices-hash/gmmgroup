@@ -27,10 +27,12 @@ import {
   Award,
   Image as ImageIcon,
   Save,
-  Undo
+  Undo,
+  Heart
 } from 'lucide-react';
 import { Property, MediaItem, PropertyType, PropertyCategory } from '../types';
 import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getStateName } from '../locationData';
+import { getPropertyMetrics } from '../propertyMetrics';
 
 interface PropertyManagerProps {
   properties: Property[];
@@ -161,6 +163,8 @@ export default function PropertyManager({
       reraFlag: false,
       approvalType: 'None',
       approvalAuthority: '',
+      viewCount: 0,
+      likeCount: 0,
       status: 'Draft',
       images: [],
       videos: [],
@@ -525,6 +529,7 @@ export default function PropertyManager({
                     {filteredProperties.map((prop) => {
                       const propertyImages = Array.isArray(prop.images) ? prop.images : [];
                       const propertyVideos = Array.isArray(prop.videos) ? prop.videos : [];
+                      const metrics = getPropertyMetrics(prop);
                       // Get cover photo
                       const coverImg = propertyImages.find(img => img.isCoverOrPrimary)?.url || 
                                        propertyImages[0]?.url || 
@@ -553,6 +558,16 @@ export default function PropertyManager({
                               <span>{propertyImages.length} photos</span>
                               <span>•</span>
                               <span>{propertyVideos.length} videos</span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-zinc-400 font-mono">
+                              <span className="inline-flex items-center gap-1">
+                                <Eye className="w-3 h-3 text-sky-400" />
+                                Views: {metrics.views.toLocaleString('en-IN')}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
+                                Likes: {metrics.likes.toLocaleString('en-IN')}
+                              </span>
                             </div>
                           </td>
 
@@ -919,9 +934,42 @@ export default function PropertyManager({
                 </div>
               </div>
 
+              {/* Listing Engagement Metrics */}
+              <div className="bg-zinc-900/30 border border-zinc-800/40 rounded-xl p-5 space-y-4">
+                <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans border-b border-zinc-900 pb-2">4. LISTING ENGAGEMENT</h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label id="lbl-prop-views" className="text-xs font-medium text-zinc-400 block">Views</label>
+                    <input
+                      id="input-prop-views"
+                      type="number"
+                      min={0}
+                      placeholder="e.g. 127"
+                      value={editingProp.viewCount ?? ''}
+                      onChange={(e) => setEditingProp({ ...editingProp, viewCount: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label id="lbl-prop-likes" className="text-xs font-medium text-zinc-400 block">Likes</label>
+                    <input
+                      id="input-prop-likes"
+                      type="number"
+                      min={0}
+                      placeholder="e.g. 0"
+                      value={editingProp.likeCount ?? ''}
+                      onChange={(e) => setEditingProp({ ...editingProp, likeCount: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Status & Options Toggles layout */}
               <div className="bg-zinc-900/30 border border-zinc-800/40 rounded-xl p-5 space-y-4">
-                <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans border-b border-zinc-900 pb-2">4. REGULATION & MARKET FEATHERING</h4>
+                <h4 className="text-xs font-bold text-zinc-300 tracking-wide font-sans border-b border-zinc-900 pb-2">5. REGULATION & MARKET FEATHERING</h4>
                 
                 <div className="flex flex-wrap gap-6 text-xs text-zinc-200 items-end">
                   {/* Approval type */}

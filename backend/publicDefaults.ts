@@ -52,6 +52,8 @@ const toAdminProperty = (property: PublicProperty): AdminProperty => {
     reraFlag: property.rera,
     approvalType: property.approvalType ?? (property.rera ? "RERA" : "None"),
     approvalAuthority: property.approvalAuthority,
+    viewCount: property.viewCount,
+    likeCount: property.likeCount,
     status: "Published",
     images: property.imageUrl
       ? [

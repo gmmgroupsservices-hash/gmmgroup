@@ -31,6 +31,8 @@ export interface Property {
   reraFlag: boolean;
   approvalType?: "RERA" | "CREDAI" | "Local Approval" | "None";
   approvalAuthority?: string;
+  viewCount?: number;
+  likeCount?: number;
   status: 'Published' | 'Draft';
   images: MediaItem[]; // up to 8
   videos: MediaItem[]; // up to 2

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { X, MapPin, ShieldCheck, Mail, Phone, Calendar, Send, Compass, DollarSign } from "lucide-react";
+import { X, MapPin, ShieldCheck, Mail, Phone, Calendar, Send, Compass, DollarSign, Eye, Heart } from "lucide-react";
 import { Property } from "../types";
 import { getStateName } from "../locationData";
+import { getPropertyMetrics } from "../propertyMetrics";
 
 interface QuickViewModalProps {
   property: Property;
@@ -29,6 +30,7 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
       : approvalType === "Local Approval"
         ? `${approvalLabel} Approval`
         : `${approvalLabel} Approved`;
+  const metrics = getPropertyMetrics(property);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +106,17 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
             <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">
               <MapPin className="w-4.5 h-4.5 text-teal-400" />
               <span>{property.location} ({property.city}, {getStateName(property.state)})</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-gray-300 text-xs py-1">
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-sky-300" />
+                Views: {metrics.views.toLocaleString("en-IN")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="w-4 h-4 text-rose-300 fill-rose-300" />
+                Likes: {metrics.likes.toLocaleString("en-IN")}
+              </span>
             </div>
 
             <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">

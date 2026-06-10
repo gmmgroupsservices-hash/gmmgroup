@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Heart, Layers, MapPin, Eye, Compass, Phone, ShieldCheck, Video, Check } from "lucide-react";
 import { Property } from "../types";
 import { getStateName } from "../locationData";
+import { getPropertyMetrics } from "../propertyMetrics";
 
 interface PropertyCardProps {
   key?: React.Key;
@@ -42,6 +43,7 @@ export default function PropertyCard({
       ? property.approvalAuthority?.trim() || "Local Approval"
       : approvalType;
   const hasApproval = approvalType !== "None";
+  const metrics = getPropertyMetrics(property);
 
   const handleNextMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -181,8 +183,20 @@ export default function PropertyCard({
             <span className="line-clamp-1">{property.location}</span>
           </div>
 
+          <div className="flex items-center gap-3 text-[11px] text-gray-300 border-b border-white/5 pb-2">
+            <span className="inline-flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 text-sky-300" />
+              <span>Views: {metrics.views.toLocaleString("en-IN")}</span>
+            </span>
+            <span className="text-gray-600">|</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Heart className="w-3.5 h-3.5 text-rose-300 fill-rose-300" />
+              <span>Likes: {metrics.likes.toLocaleString("en-IN")}</span>
+            </span>
+          </div>
+
           {/* Property Stats Grid */}
-          <div className="grid grid-cols-3 gap-2 py-2 border-y border-white/5 text-center mt-2">
+          <div className="grid grid-cols-3 gap-2 py-2 border-b border-white/5 text-center mt-2">
             <div>
               <p className="text-[10px] text-gray-500 uppercase font-outfit">Beds BHK</p>
               <p className="text-xs font-semibold text-white">{property.beds || "Plot"}</p>

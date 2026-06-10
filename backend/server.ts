@@ -102,6 +102,10 @@ const toAdminProperty = (property: PublicProperty): AdminProperty => {
     description: property.description,
     featured: property.featured,
     reraFlag: property.rera,
+    approvalType: property.approvalType ?? (property.rera ? "RERA" : "None"),
+    approvalAuthority: property.approvalAuthority,
+    viewCount: property.viewCount,
+    likeCount: property.likeCount,
     status: "Published",
     images: property.imageUrl
       ? [
@@ -177,6 +181,10 @@ const toPublicProperty = (property: AdminProperty): PublicProperty => {
     videoUrl: videoUrls[0] || existing?.videoUrl,
     videoUrls,
     rera: property.reraFlag,
+    approvalType: property.approvalType ?? (property.reraFlag ? "RERA" : "None"),
+    approvalAuthority: property.approvalAuthority,
+    viewCount: property.viewCount ?? existing?.viewCount,
+    likeCount: property.likeCount ?? existing?.likeCount,
     featured: property.featured,
     description: property.description || existing?.description || "",
     highlights: existing?.highlights ?? [],
