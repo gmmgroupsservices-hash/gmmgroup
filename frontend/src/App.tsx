@@ -14,6 +14,7 @@ import VideoReels from "./components/VideoReels";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
 import ContactAndFooter from "./components/ContactAndFooter";
+import { getStateCode } from "./locationData";
 import {
   Property,
   ServiceItem,
@@ -320,14 +321,15 @@ export default function App() {
   // 5. Compute filtered listings dynamically
   const filteredProperties = properties.filter((prop) => {
     
-    // Check Search Text Lookups (Title, Location, City matching)
+    // Check Search Text Lookups (Title, State, District, Locality matching)
     if (searchText) {
       const text = searchText.toLowerCase();
       if (
         !prop.title.toLowerCase().includes(text) &&
         !prop.location.toLowerCase().includes(text) &&
         !prop.type.toLowerCase().includes(text) &&
-        !prop.city.toLowerCase().includes(text)
+        !prop.city.toLowerCase().includes(text) &&
+        !prop.state.toLowerCase().includes(text)
       ) {
         return false;
       }
@@ -343,7 +345,7 @@ export default function App() {
     }
 
     // Dropdown configurations
-    if (selectedState && prop.state !== selectedState) return false;
+    if (selectedState && getStateCode(prop.state) !== getStateCode(selectedState)) return false;
     if (selectedCity && prop.city !== selectedCity) return false;
     if (selectedLocation && prop.location !== selectedLocation) return false;
     if (selectedType && prop.type !== selectedType) return false;
@@ -367,7 +369,7 @@ export default function App() {
   const locationOptions = Array.from<string>(
     new Set(
       properties
-        .filter((prop) => (!selectedState || prop.state === selectedState) && (!selectedCity || prop.city === selectedCity))
+        .filter((prop) => (!selectedState || getStateCode(prop.state) === getStateCode(selectedState)) && (!selectedCity || prop.city === selectedCity))
         .map((prop) => prop.location)
     )
   ).sort();

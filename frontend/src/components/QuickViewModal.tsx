@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, MapPin, ShieldCheck, Mail, Phone, Calendar, Send, Compass, DollarSign } from "lucide-react";
 import { Property } from "../types";
+import { getStateName } from "../locationData";
 
 interface QuickViewModalProps {
   property: Property;
@@ -102,7 +103,7 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
             {/* Micro Location Details */}
             <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">
               <MapPin className="w-4.5 h-4.5 text-teal-400" />
-              <span>{property.location} ({property.city}, {property.state})</span>
+              <span>{property.location} ({property.city}, {getStateName(property.state)})</span>
             </div>
 
             <div className="flex items-center space-x-1 text-gray-300 text-xs py-1">

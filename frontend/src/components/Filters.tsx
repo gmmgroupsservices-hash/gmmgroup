@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, MapPin, DollarSign, Home, Users, Percent, HelpCircle } from "lucide-react";
+import { INDIA_STATE_OPTIONS, getDistrictOptionsForState } from "../locationData";
 
 interface FiltersProps {
   activeTab: string;
@@ -59,17 +60,9 @@ export default function Filters({
   const [sellPhone, setSellPhone] = useState<string>("");
   const [sellSubmitted, setSellSubmitted] = useState<boolean>(false);
 
-  // AP, Telangana, Karnataka city mappings
-  const citiesByState: Record<string, string[]> = {
-    "": ["Hyderabad", "Bangalore", "Vizag", "Vijayawada"],
-    "Telangana": ["Hyderabad"],
-    "Karnataka": ["Bangalore"],
-    "AP": ["Vizag", "Vijayawada"]
-  };
-
   const handleStateChange = (state: string) => {
     setSelectedState(state);
-    setSelectedCity(""); // Reset city when state shifts
+    setSelectedCity(""); // Reset district when state shifts
     setSelectedLocation("");
   };
 
@@ -150,10 +143,10 @@ export default function Filters({
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder={
                   activeTab === "Rent"
-                    ? "Enter BHK size, apartment or commercial in Hyderabad/Bangalore (e.g. rent executive suites)"
+                    ? "Enter BHK size, apartment or commercial in any Indian state, district, or locality"
                     : activeTab === "All"
-                      ? "Search all GMM listings by property name, city, location, or type..."
-                      : "Try '4BHK Villa in Bangalore', 'Jubilee Hills Mansion' or 'Sovereign Plots'..."
+                      ? "Search all GMM listings by property name, state, district, locality, or type..."
+                      : "Try '4BHK Villa in Hyderabad', 'Jubilee Hills Mansion' or 'Sovereign Plots'..."
                 }
                 className="w-full glass-input pl-12 pr-4 py-4 rounded-2xl text-sm tracking-wide shadow-inner"
               />
@@ -166,57 +159,64 @@ export default function Filters({
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <MapPin className="w-3 h-3 text-teal-400" />
-                  <span>State Registry</span>
+                  <span>State</span>
                 </label>
                 <select
                   value={selectedState}
                   onChange={(e) => handleStateChange(e.target.value)}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
                 >
-                  <option value="">All States (AP, TS, KA)</option>
-                  <option value="Telangana">Telangana (TS)</option>
-                  <option value="Karnataka">Karnataka (KA)</option>
-                  <option value="AP">Andhra Pradesh (AP)</option>
+                  <option value="">All India States & UTs</option>
+                  {INDIA_STATE_OPTIONS.map((state) => (
+                    <option key={state.code} value={state.name}>
+                      {state.name} ({state.code})
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Filter 2: Dynamic City based on State */}
+              {/* Filter 2: Dynamic District based on State */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <MapPin className="w-3 h-3 text-sky-400" />
-                  <span>Premium City</span>
+                  <span>District</span>
                 </label>
-                <select
+                <input
                   value={selectedCity}
                   onChange={(e) => {
                     setSelectedCity(e.target.value);
                     setSelectedLocation("");
                   }}
+                  list="district-suggestions"
+                  placeholder={selectedState ? "Search district" : "Select a state first"}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
-                >
-                  <option value="">All Micro-Markets</option>
-                  {citiesByState[selectedState]?.map((city) => (
-                    <option key={city} value={city}>{city}</option>
+                  disabled={!selectedState}
+                />
+                <datalist id="district-suggestions">
+                  {getDistrictOptionsForState(selectedState).map((district) => (
+                    <option key={district} value={district} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
-              {/* Filter 3: Exact Location Selector */}
+              {/* Filter 3: Exact Locality Selector */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-gray-400 font-outfit font-medium flex items-center space-x-1">
                   <MapPin className="w-3 h-3 text-cyan-400" />
-                  <span>Exact Location</span>
+                  <span>Locality</span>
                 </label>
-                <select
+                <input
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
+                  list="locality-suggestions"
+                  placeholder="Search locality / village / society"
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
-                >
-                  <option value="">All Locations</option>
+                />
+                <datalist id="locality-suggestions">
                   {locationOptions.map((location) => (
-                    <option key={location} value={location}>{location}</option>
+                    <option key={location} value={location} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
               {/* Filter 4: Property Type Selector */}

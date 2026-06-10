@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Heart, Layers, MapPin, Eye, Compass, Phone, ShieldCheck, Video, Check } from "lucide-react";
 import { Property } from "../types";
+import { getStateName } from "../locationData";
 
 interface PropertyCardProps {
   key?: React.Key;
@@ -166,7 +167,7 @@ export default function PropertyCard({
             </span>
             <span className="font-mono text-[9px] text-gray-500 uppercase tracking-wider flex items-center space-x-1">
               <Compass className="w-2.5 h-2.5 text-sky-400" />
-              <span>{property.state} Corridor</span>
+              <span>{getStateName(property.state)} Corridor</span>
             </span>
           </div>
 

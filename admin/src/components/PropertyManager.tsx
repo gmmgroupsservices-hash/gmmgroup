@@ -30,6 +30,7 @@ import {
   Undo
 } from 'lucide-react';
 import { Property, MediaItem, PropertyType, PropertyCategory } from '../types';
+import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getStateName } from '../locationData';
 
 interface PropertyManagerProps {
   properties: Property[];
@@ -123,6 +124,20 @@ export default function PropertyManager({
   // Categories/Types for reference
   const categories: PropertyCategory[] = ['Residential', 'Commercial', 'Plot', 'Villa', 'Apartment', 'Warehouse'];
   const types: PropertyType[] = ['Sale', 'Rent', 'Lease'];
+  const districtOptions = editingProp ? getDistrictOptionsForState(editingProp.state) : [];
+  const localityOptions = Array.from(
+    new Set(
+      properties
+        .filter((property) => {
+          if (!editingProp) return true;
+          const stateMatches = !editingProp.state || getStateName(property.state) === getStateName(editingProp.state);
+          const districtMatches = !editingProp.city || property.city === editingProp.city;
+          return stateMatches && districtMatches;
+        })
+        .map((property) => property.location)
+        .filter(Boolean)
+    )
+  ).sort();
 
   // Handle open editor for new property
   const handleCreateNew = () => {
@@ -155,7 +170,10 @@ export default function PropertyManager({
 
   // Handle opening editor for existing property
   const handleEdit = (prop: Property) => {
-    setEditingProp({ ...prop });
+    setEditingProp({
+      ...prop,
+      state: getStateName(prop.state) || prop.state
+    });
     setIsCreatingNew(false);
     setCustomImageTitle('');
     setCustomVideoTitle('');
@@ -795,43 +813,62 @@ export default function PropertyManager({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Location/Street address detail */}
                   <div className="space-y-1.5 sm:col-span-1">
-                    <label id="lbl-prop-locality" className="text-xs font-medium text-zinc-400 block">Specific Locality / Society</label>
+                    <label id="lbl-prop-locality" className="text-xs font-medium text-zinc-400 block">Locality / Society / Village</label>
                     <input
                       id="input-prop-locality"
                       type="text"
                       placeholder="e.g. Worli Sea Face"
                       value={editingProp.location}
+                      list="locality-suggestions"
                       onChange={(e) => setEditingProp({ ...editingProp, location: e.target.value })}
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
 
-                  {/* City */}
+                  {/* District */}
                   <div className="space-y-1.5">
-                    <label id="lbl-prop-city" className="text-xs font-medium text-zinc-400 block">City</label>
+                    <label id="lbl-prop-city" className="text-xs font-medium text-zinc-400 block">District</label>
                     <input
                       id="input-prop-city"
-                      type="text"
-                      placeholder="e.g. Mumbai"
+                      list="district-suggestions"
+                      placeholder={editingProp.state ? "Search district" : "Select state first"}
                       value={editingProp.city}
-                      onChange={(e) => setEditingProp({ ...editingProp, city: e.target.value })}
+                      onChange={(e) => setEditingProp({ ...editingProp, city: e.target.value, location: '' })}
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     />
+                    <datalist id="district-suggestions">
+                      {districtOptions.map((district) => (
+                        <option key={district} value={district} />
+                      ))}
+                      {editingProp.city && !districtOptions.includes(editingProp.city) && (
+                        <option value={editingProp.city} />
+                      )}
+                    </datalist>
                   </div>
 
                   {/* State */}
                   <div className="space-y-1.5">
                     <label id="lbl-prop-state" className="text-xs font-medium text-zinc-400 block">State</label>
-                    <input
+                    <select
                       id="input-prop-state"
-                      type="text"
-                      placeholder="e.g. Maharashtra"
                       value={editingProp.state}
-                      onChange={(e) => setEditingProp({ ...editingProp, state: e.target.value })}
+                      onChange={(e) => setEditingProp({ ...editingProp, state: e.target.value, city: '', location: '' })}
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                    />
+                    >
+                      <option value="">Select State / UT</option>
+                      {INDIA_STATE_OPTIONS.map((state) => (
+                        <option key={state.code} value={state.name}>
+                          {state.name} ({state.code})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
+                <datalist id="locality-suggestions">
+                  {localityOptions.map((locality) => (
+                    <option key={locality} value={locality} />
+                  ))}
+                </datalist>
               </div>
 
               {/* Layout Specifications Metrics Card */}
