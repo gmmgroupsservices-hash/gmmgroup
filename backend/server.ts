@@ -527,6 +527,43 @@ app.get("/api/properties", (req, res) => {
   res.json(properties);
 });
 
+const recordPropertyEngagement = (id: string, action: "view" | "like" | "unlike") => {
+  const index = properties.findIndex((property) => property.id === id);
+  if (index === -1) return null;
+
+  const property = properties[index];
+  const currentViews = Number(property.viewCount ?? 0) || 0;
+  const currentLikes = Number(property.likeCount ?? 0) || 0;
+
+  properties[index] = {
+    ...property,
+    viewCount: action === "view" ? currentViews + 1 : currentViews,
+    likeCount:
+      action === "like"
+        ? currentLikes + 1
+        : action === "unlike"
+          ? Math.max(0, currentLikes - 1)
+          : currentLikes
+  };
+  syncAdminPropertiesFromPublicProperties(properties);
+  persistBackendState();
+
+  return properties[index];
+};
+
+app.post("/api/properties/:id/view", (req, res) => {
+  const property = recordPropertyEngagement(req.params.id, "view");
+  if (!property) return res.status(404).json({ error: "Property not found" });
+  res.json(property);
+});
+
+app.post("/api/properties/:id/like", (req, res) => {
+  const liked = req.body?.liked !== false;
+  const property = recordPropertyEngagement(req.params.id, liked ? "like" : "unlike");
+  if (!property) return res.status(404).json({ error: "Property not found" });
+  res.json(property);
+});
+
 app.post("/api/properties", (req, res) => {
   const newPropObject = req.body as PublicProperty;
   if (!newPropObject.id) {

@@ -310,5 +310,27 @@ export const getPublicProperties = (): PublicProperty[] => {
   });
 };
 
+export const updatePropertyEngagement = (
+  id: string,
+  action: "view" | "like" | "unlike"
+): PublicProperty | null => {
+  const property = siteContent.properties.find((item) => item.id === id);
+  if (!property) return null;
+
+  const seededProperty = PUBLIC_INITIAL_PROPERTIES.find((item) => item.id === id);
+  const currentViews = Number(property.viewCount ?? seededProperty?.viewCount ?? 0) || 0;
+  const currentLikes = Number(property.likeCount ?? seededProperty?.likeCount ?? 0) || 0;
+
+  if (action === "view") {
+    property.viewCount = currentViews + 1;
+  } else if (action === "like") {
+    property.likeCount = currentLikes + 1;
+  } else {
+    property.likeCount = Math.max(0, currentLikes - 1);
+  }
+
+  return getPublicProperties().find((item) => item.id === id) ?? null;
+};
+
 export const isAuthorized = (authorization?: string) =>
   authorization === `Bearer ${ADMIN_SESSION_TOKEN}`;

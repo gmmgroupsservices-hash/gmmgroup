@@ -41,6 +41,7 @@ import {
   writeDemoContent,
   type DemoSiteContent
 } from "./demoContentSync";
+import { getPropertyMetrics } from "./propertyMetrics";
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "") : "";
 
@@ -281,11 +282,69 @@ export default function App() {
     localStorage.setItem("gmm_favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  // Selections & Comparison Drawer triggers
+  const patchPropertyById = useCallback((id: string, patcher: (property: Property) => Property) => {
+    setProperties((prev) => prev.map((property) => (property.id === id ? patcher(property) : property)));
+    setQuickViewProperty((prev) => (prev?.id === id ? patcher(prev) : prev));
+  }, []);
+
+  const mergeEngagementProperty = useCallback((updatedProperty: Property) => {
+    patchPropertyById(updatedProperty.id, (property) => ({
+      ...property,
+      viewCount: updatedProperty.viewCount,
+      likeCount: updatedProperty.likeCount
+    }));
+  }, [patchPropertyById]);
+
+  const sendEngagementEvent = useCallback(async (id: string, action: "view" | "like", liked?: boolean) => {
+    if (isDemoPreview) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/properties/${encodeURIComponent(id)}/${action}`, {
+        method: "POST",
+        headers: action === "like" ? { "Content-Type": "application/json" } : undefined,
+        body: action === "like" ? JSON.stringify({ liked }) : undefined
+      });
+
+      if (!response.ok) return;
+      const updatedProperty = await response.json();
+      if (updatedProperty?.id) mergeEngagementProperty(updatedProperty);
+    } catch (err) {
+      console.warn(`Unable to sync property ${action}. Keeping local optimistic count.`, err);
+    }
+  }, [isDemoPreview, mergeEngagementProperty]);
+
+  const handleOpenQuickView = useCallback((property: Property) => {
+    setQuickViewProperty(property);
+
+    const viewKey = `gmm_viewed_property_${property.id}`;
+    if (sessionStorage.getItem(viewKey)) return;
+    sessionStorage.setItem(viewKey, "1");
+
+    patchPropertyById(property.id, (currentProperty) => {
+      const metrics = getPropertyMetrics(currentProperty);
+      return {
+        ...currentProperty,
+        viewCount: metrics.views + 1
+      };
+    });
+    void sendEngagementEvent(property.id, "view");
+  }, [patchPropertyById, sendEngagementEvent]);
+
+  // Selections, likes & comparison drawer triggers
   const handleToggleFavorite = (id: string) => {
+    const shouldLike = !favorites.includes(id);
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
     );
+
+    patchPropertyById(id, (property) => {
+      const metrics = getPropertyMetrics(property);
+      return {
+        ...property,
+        likeCount: shouldLike ? metrics.likes + 1 : Math.max(0, metrics.likes - 1)
+      };
+    });
+    void sendEngagementEvent(id, "like", shouldLike);
   };
 
   const handleToggleCompare = (id: string) => {
@@ -484,7 +543,7 @@ export default function App() {
                       isComparing={comparingIds.includes(prop.id)}
                       onToggleFavorite={() => handleToggleFavorite(prop.id)}
                       onToggleCompare={() => handleToggleCompare(prop.id)}
-                      onQuickView={() => setQuickViewProperty(prop)}
+                      onQuickView={() => handleOpenQuickView(prop)}
                     />
                   ))}
                 </div>
@@ -509,7 +568,7 @@ export default function App() {
                       isComparing={comparingIds.includes(prop.id)}
                       onToggleFavorite={() => handleToggleFavorite(prop.id)}
                       onToggleCompare={() => handleToggleCompare(prop.id)}
-                      onQuickView={() => setQuickViewProperty(prop)}
+                      onQuickView={() => handleOpenQuickView(prop)}
                     />
                   ))}
                 </div>
@@ -532,7 +591,7 @@ export default function App() {
       <VideoReels reels={reels} />
 
       {/* GMM Smart AI Advisor - Gemini Grounding */}
-      <AIConcierge onQuickViewProperty={(p) => setQuickViewProperty(p)} />
+      <AIConcierge onQuickViewProperty={handleOpenQuickView} />
 
       {/* Sovereign High-contrast testimonials */}
       <Testimonials testimonials={testimonials} />
@@ -585,7 +644,7 @@ export default function App() {
                       <div className="flex items-center space-x-1 flex-shrink-0">
                         <button
                           onClick={() => {
-                            setQuickViewProperty(prop);
+                            handleOpenQuickView(prop);
                             setShowFavoritesDrawer(false);
                           }}
                           className="p-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 rounded-lg text-xs"
@@ -689,7 +748,7 @@ export default function App() {
 
                         <button
                           onClick={() => {
-                            setQuickViewProperty(prop);
+                            handleOpenQuickView(prop);
                             setShowCompareDrawer(false);
                           }}
                           className="w-full bg-slate-900 border border-white/5 text-gray-200 py-1.5 rounded-lg text-[10px] font-semibold cursor-pointer"
