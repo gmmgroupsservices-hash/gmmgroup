@@ -234,11 +234,11 @@ export default function Filters({
                   onChange={(e) => setSelectedType(e.target.value)}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-400 focus:outline-none"
                 >
-                  <option value="">All Architectures</option>
-                  <option value="Villa">Luxury Villa</option>
-                  <option value="Apartment">SaaS Sky Penthouse/Suite</option>
-                  <option value="Commercial">Commercial Office HQ</option>
-                  <option value="Plot">Premium Gated Plot</option>
+                  <option value="">All Properties</option>
+                  <option value="Villa">Open Villa Plots</option>
+                  <option value="Apartment">Apartment Flats</option>
+                  <option value="Commercial">Agricultural Lands</option>
+                  <option value="Plot">Commercial Properties</option>
                 </select>
               </div>
 
