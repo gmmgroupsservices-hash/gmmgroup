@@ -66,6 +66,10 @@ export default function Filters({
     setSelectedLocation("");
   };
 
+  const handleSearchClick = () => {
+    document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   // Pre-approval quick EMI calculator logic
   const calculateEMI = () => {
     const P = mortgageAmount;
@@ -284,16 +288,27 @@ export default function Filters({
             </div>
 
             {/* Quick Helper reset triggers */}
-            <div className="flex items-center justify-between text-xs pt-2">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-gray-400">
                 Found active grounded results matching your parameters...
               </p>
-              <button
-                onClick={onResetFilters}
-                className="text-teal-400 hover:text-teal-300 font-semibold underline cursor-pointer"
-              >
-                Clear Filters
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSearchClick}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-teal-500/15 transition hover:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                >
+                  <Search className="h-4 w-4" />
+                  Search Properties
+                </button>
+                <button
+                  type="button"
+                  onClick={onResetFilters}
+                  className="text-xs font-semibold text-teal-400 underline transition hover:text-teal-300"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
           </div>
         )}
