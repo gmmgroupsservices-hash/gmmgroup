@@ -13,6 +13,7 @@ export interface MediaItem {
 
 export type PropertyType = 'Sale' | 'Rent' | 'Lease';
 export type PropertyCategory = 'Residential' | 'Commercial' | 'Plot' | 'Villa' | 'Apartment' | 'Warehouse';
+export type PlotFacing = 'East' | 'North' | 'North-East' | 'North-West' | 'South' | 'South-East' | 'South-West' | 'West';
 
 export interface Property {
   id: string;
@@ -26,6 +27,7 @@ export interface Property {
   beds: number;
   baths: number;
   squareFeet: number;
+  plotFacing?: PlotFacing | '';
   description: string;
   featured: boolean;
   reraFlag: boolean;

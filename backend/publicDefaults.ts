@@ -47,6 +47,7 @@ const toAdminProperty = (property: PublicProperty): AdminProperty => {
     beds: property.beds,
     baths: property.baths,
     squareFeet: property.sqft,
+    plotFacing: property.type === "Plot" ? property.plotFacing || "" : "",
     description: property.description,
     featured: property.featured,
     reraFlag: property.rera,

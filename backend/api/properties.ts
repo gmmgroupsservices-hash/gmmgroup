@@ -89,6 +89,7 @@ const mapPropertyForWebsite = (property: any) => {
     baths: Number(property?.baths) || 0,
     sqft: Number(property?.squareFeet) || 0,
     type: typeMap[property?.category] || "Apartment",
+    plotFacing: property?.category === "Plot" ? property?.plotFacing || "" : "",
     imageUrl: imageUrls[0] || FALLBACK_IMAGE,
     imageUrls,
     videoUrl: videoUrls[0],

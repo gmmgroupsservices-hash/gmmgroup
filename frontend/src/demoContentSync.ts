@@ -40,6 +40,7 @@ interface AdminProperty {
   beds: number;
   baths: number;
   squareFeet: number;
+  plotFacing?: Property["plotFacing"];
   description: string;
   featured: boolean;
   reraFlag: boolean;
@@ -155,6 +156,7 @@ export const mapContentPropertiesToPublic = (properties: Array<Property | AdminP
         baths: Number(property.baths) || 0,
         sqft: Number(property.squareFeet) || existing?.sqft || 0,
         type: typeMap[property.category] ?? existing?.type ?? "Apartment",
+        plotFacing: property.category === "Plot" ? property.plotFacing || existing?.plotFacing || "" : "",
         imageUrl: imageUrls[0] || existing?.imageUrl || FALLBACK_IMAGE,
         imageUrls,
         videoUrl: videoUrls[0] || existing?.videoUrl,

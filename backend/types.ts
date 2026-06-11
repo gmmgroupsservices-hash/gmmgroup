@@ -10,6 +10,7 @@ export interface PublicProperty {
   baths: number;
   sqft: number;
   type: "Villa" | "Apartment" | "Commercial" | "Plot";
+  plotFacing?: PlotFacing | "";
   imageUrl: string;
   imageUrls?: string[];
   videoUrl?: string;
@@ -49,6 +50,7 @@ export interface MediaItem {
 
 export type PropertyType = "Sale" | "Rent" | "Lease";
 export type PropertyCategory = "Residential" | "Commercial" | "Plot" | "Villa" | "Apartment" | "Warehouse";
+export type PlotFacing = "East" | "North" | "North-East" | "North-West" | "South" | "South-East" | "South-West" | "West";
 
 export interface AdminProperty {
   id: string;
@@ -62,6 +64,7 @@ export interface AdminProperty {
   beds: number;
   baths: number;
   squareFeet: number;
+  plotFacing?: PlotFacing | "";
   description: string;
   featured: boolean;
   reraFlag: boolean;

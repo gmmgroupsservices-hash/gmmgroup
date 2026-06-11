@@ -171,6 +171,7 @@ export const INITIAL_PROPERTIES: Property[] = [
     beds: 0,
     baths: 0,
     squareFeet: 12000,
+    plotFacing: "East",
     description: "Strategic commercial industrial plot measuring 12,000 sqft with ready boundary wall fencing, dual entry-exit steel gates, wide approach concrete roads, and stable access to high-tension electricity lines. Highly suitable for warehouses, e-commerce storage depots, or dynamic processing centers.",
     featured: false,
     reraFlag: false,

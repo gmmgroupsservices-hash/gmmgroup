@@ -731,6 +731,9 @@ export default function App() {
                           <li className="flex justify-between"><span>Micro Corridor:</span> <span className="text-white truncate max-w-[120px]">{prop.location}</span></li>
                           <li className="flex justify-between"><span>Sq.Ft Area:</span> <span className="text-white">{prop.sqft}</span></li>
                           <li className="flex justify-between"><span>BHK Beds:</span> <span className="text-white">{prop.beds || "Plot"}</span></li>
+                          {prop.type === "Plot" && prop.plotFacing && (
+                            <li className="flex justify-between"><span>Plot Facing:</span> <span className="text-white">{prop.plotFacing}</span></li>
+                          )}
                           <li className="flex justify-between">
                             <span>Approval Status:</span>
                             <span className="text-emerald-400 flex items-center gap-0.5">

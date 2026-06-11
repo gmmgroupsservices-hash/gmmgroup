@@ -135,6 +135,7 @@ export const DEMO_PROPERTIES: Property[] = [
     beds: 0,
     baths: 0,
     squareFeet: 4500,
+    plotFacing: 'East',
     description:
       "Prime beach-facing premium developmental high-value lands in Andhra Pradesh's burgeoning executive capital. Pre-approved for instant multi-elevation luxury villa development with direct private beach slipway permissions.",
     featured: false,
@@ -177,6 +178,7 @@ export const DEMO_PROPERTIES: Property[] = [
     beds: 0,
     baths: 0,
     squareFeet: 3600,
+    plotFacing: 'North-East',
     description:
       "Premium investment-ready dynamic plots in AP's heartland district. Fully integrated urban high-efficiency master development with wide solar-illuminated avenues, private parks, and advanced smart automated security infrastructure.",
     featured: false,

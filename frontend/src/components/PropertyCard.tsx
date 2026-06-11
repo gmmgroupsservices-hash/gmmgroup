@@ -44,6 +44,7 @@ export default function PropertyCard({
       : approvalType;
   const hasApproval = approvalType !== "None";
   const metrics = getPropertyMetrics(property);
+  const shouldShowPlotFacing = property.type === "Plot" && Boolean(property.plotFacing);
 
   const handleNextMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -182,6 +183,13 @@ export default function PropertyCard({
             <MapPin className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
             <span className="line-clamp-1">{property.location}</span>
           </div>
+
+          {shouldShowPlotFacing && (
+            <div className="flex items-center space-x-1 text-teal-300 text-xs">
+              <Compass className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+              <span>Facing: {property.plotFacing}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 text-[11px] text-gray-300 border-b border-white/5 pb-2">
             <span className="inline-flex items-center gap-1.5">

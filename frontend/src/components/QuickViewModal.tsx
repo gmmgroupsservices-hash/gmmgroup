@@ -31,6 +31,7 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
         ? `${approvalLabel} Approval`
         : `${approvalLabel} Approved`;
   const metrics = getPropertyMetrics(property);
+  const shouldShowPlotFacing = property.type === "Plot" && Boolean(property.plotFacing);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +108,13 @@ export default function QuickViewModal({ property, onClose }: QuickViewModalProp
               <MapPin className="w-4.5 h-4.5 text-teal-400" />
               <span>{property.location} ({property.city}, {getStateName(property.state)})</span>
             </div>
+
+            {shouldShowPlotFacing && (
+              <div className="flex items-center space-x-1 text-teal-300 text-xs py-1">
+                <Compass className="w-4 h-4 text-teal-400" />
+                <span>Plot Facing: {property.plotFacing}</span>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-4 text-gray-300 text-xs py-1">
               <span className="inline-flex items-center gap-1.5">

@@ -30,7 +30,7 @@ import {
   Undo,
   Heart
 } from 'lucide-react';
-import { Property, MediaItem, PropertyType, PropertyCategory } from '../types';
+import { Property, MediaItem, PropertyType, PropertyCategory, PlotFacing } from '../types';
 import { INDIA_STATE_OPTIONS, getDistrictOptionsForState, getLocalityOptionsForDistrict, getStateName } from '../locationData';
 import { getPropertyMetrics } from '../propertyMetrics';
 
@@ -44,6 +44,7 @@ interface PropertyManagerProps {
 const MAX_IMAGES_PER_PROPERTY = 8;
 const MAX_VIDEOS_PER_PROPERTY = 2;
 const MAX_TOTAL_MEDIA_PER_PROPERTY = 10;
+const PLOT_FACING_OPTIONS: PlotFacing[] = ['East', 'North', 'North-East', 'North-West', 'South', 'South-East', 'South-West', 'West'];
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '') : '';
 const ADMIN_STORAGE_KEY = 'gmm_admin_token';
 const DEMO_ADMIN_TOKEN = 'gmm_demo_token';
@@ -161,6 +162,7 @@ export default function PropertyManager({
       beds: 0,
       baths: 0,
       squareFeet: 0,
+      plotFacing: '',
       description: '',
       featured: false,
       reraFlag: false,
@@ -216,6 +218,7 @@ export default function PropertyManager({
       images: currentImages,
       approvalType,
       approvalAuthority,
+      plotFacing: editingProp.category === 'Plot' ? editingProp.plotFacing || '' : '',
       reraFlag: approvalType === 'RERA'
     };
     onSaveProperty(updatedProp);
@@ -802,7 +805,16 @@ export default function PropertyManager({
                     <select
                       id="select-prop-category"
                       value={editingProp.category}
-                      onChange={(e) => setEditingProp({ ...editingProp, category: e.target.value as PropertyCategory })}
+                      onChange={(e) => {
+                        const nextCategory = e.target.value as PropertyCategory;
+                        setEditingProp({
+                          ...editingProp,
+                          category: nextCategory,
+                          plotFacing: nextCategory === 'Plot' ? editingProp.plotFacing || '' : '',
+                          beds: nextCategory === 'Plot' || nextCategory === 'Warehouse' ? 0 : editingProp.beds,
+                          baths: nextCategory === 'Plot' ? 0 : editingProp.baths
+                        });
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     >
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -935,6 +947,25 @@ export default function PropertyManager({
                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
+
+                  {editingProp.category === 'Plot' && (
+                    <div className="space-y-1.5">
+                      <label id="lbl-prop-facing" className="text-xs font-medium text-zinc-400 block">Plot Facing</label>
+                      <select
+                        id="select-prop-facing"
+                        value={editingProp.plotFacing || ''}
+                        onChange={(e) => setEditingProp({ ...editingProp, plotFacing: e.target.value as PlotFacing | '' })}
+                        className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      >
+                        <option value="">Select Facing</option>
+                        {PLOT_FACING_OPTIONS.map((facing) => (
+                          <option key={facing} value={facing}>
+                            {facing}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 

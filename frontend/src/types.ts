@@ -10,6 +10,7 @@ export interface Property {
   baths: number;
   sqft: number;
   type: "Villa" | "Apartment" | "Commercial" | "Plot";
+  plotFacing?: PlotFacing | "";
   imageUrl: string;
   imageUrls?: string[];
   videoUrl?: string; // high-quality visual snippet url
@@ -27,6 +28,8 @@ export interface Property {
   valuation?: string; // Estimated home value for valuation tab
   investmentYield?: string; // For premium SaaS vibe
 }
+
+export type PlotFacing = "East" | "North" | "North-East" | "North-West" | "South" | "South-East" | "South-West" | "West";
 
 export interface Lead {
   id: string;
